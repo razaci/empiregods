@@ -1,0 +1,1781 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Empire Gods — Part 1</title>
+<style>
+:root{--bg:#071018;--panel:#0d1c28;--line:#2c5368;--gold:#ffd76a;--cyan:#62e7ff;--red:#ff6577;--green:#71f6a5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 20%,#173248,#050a0f 65%);color:#eef9ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:hidden}
+button{font:inherit}.top{position:sticky;top:0;z-index:20;background:#071018ee;border-bottom:1px solid #29495b;padding:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;max-width:900px;margin:auto}.stat{background:#102331;border:1px solid #284b60;border-radius:10px;padding:6px;text-align:center;font-size:11px}.stat b{display:block;color:var(--gold);font-size:15px}
+.wrap{max-width:900px;margin:auto;padding:8px}.board{position:relative;aspect-ratio:1/1;background:linear-gradient(145deg,#102432,#09141d);border:3px solid #47778e;border-radius:15px;box-shadow:0 0 40px #42dfff22,inset 0 0 30px #000}
+.cell{position:absolute;border:1px solid #416578;background:#122936;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2px;font-size:clamp(7px,1.7vw,12px);overflow:hidden}
+.cell .price{font-size:.85em;color:#bfefff}.cell.owned{box-shadow:inset 0 0 0 3px #fff5}.cell.player{outline:2px solid var(--gold);z-index:3}.cell.ai{box-shadow:inset 0 0 0 3px var(--red)}
+.c0,.c10,.c20,.c30{width:14%;height:14%}.bottom,.toprow{width:8%;height:14%}.left,.right{width:14%;height:8%}
+.center{position:absolute;left:15%;top:15%;width:70%;height:70%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px}
+.logo{font-size:clamp(22px,6vw,52px);font-weight:1000;letter-spacing:.08em;color:var(--gold);text-shadow:0 0 20px #ffcf5577}.sub{font-size:11px;color:#9dd8e8}
+.diceRow{display:flex;gap:10px;margin:12px}.die{width:54px;height:54px;border-radius:12px;background:#f8fbff;color:#071018;display:grid;place-items:center;font-size:30px;font-weight:900;box-shadow:0 6px 20px #0008}.die.roll{animation:shake .12s linear 5}@keyframes shake{50%{transform:rotate(12deg) scale(1.08)}}
+.actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}.btn{border:1px solid #4e8298;background:#143246;color:white;border-radius:12px;padding:10px 14px;font-weight:800}.btn.primary{background:linear-gradient(#ffd86c,#dba72c);color:#171000;border:0}.btn:disabled{opacity:.35}
+.msg{min-height:44px;margin-top:10px;padding:8px;border:1px solid #29495b;background:#08131b;border-radius:10px;font-size:12px;max-width:520px}
+.legend{margin-top:8px;font-size:11px;color:#acd5df;text-align:center}.token{font-size:16px;filter:drop-shadow(0 0 4px #fff)}
+@media(max-width:520px){.wrap{padding:3px}.board{border-radius:8px}.center{left:16%;top:16%;width:68%;height:68%}.diceRow{margin:6px}.die{width:43px;height:43px;font-size:24px}.btn{padding:8px 10px;font-size:12px}.msg{font-size:10px;min-height:36px;margin-top:5px}.logo{font-size:22px}.sub{font-size:9px}.stats{gap:3px}.stat{padding:4px;font-size:9px}.stat b{font-size:12px}}
+
+.deed{position:fixed;inset:0;background:#02070bd9;z-index:50;display:none;align-items:center;justify-content:center;padding:18px}.deed.show{display:flex}
+.deedCard{width:min(390px,94vw);background:linear-gradient(160deg,#132c3b,#07121a);border:2px solid var(--cyan);border-radius:18px;box-shadow:0 0 45px #5ce6ff44;padding:14px}
+.deedHead{border-radius:11px;padding:12px;text-align:center;color:#071018;font-weight:1000;font-size:20px;background:#62e7ff}.deedGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}
+.deedGrid div{background:#0b1d28;border:1px solid #294c60;border-radius:9px;padding:8px;font-size:12px}.deedGrid b{display:block;color:var(--gold);font-size:15px}
+.close{width:100%;padding:10px;border:0;border-radius:10px;font-weight:900;background:#dceff7;color:#071018}
+.band{position:absolute;height:5px;left:0;right:0;top:0}.cell{cursor:pointer}
+.buildings{font-size:9px;line-height:1;letter-spacing:-2px;margin-top:1px;white-space:nowrap}
+.cell.lvl1,.cell.lvl2,.cell.lvl3{background:linear-gradient(160deg,#16394a,#0b1e29)}
+.cell.lvl4{background:linear-gradient(160deg,#4b3b16,#14210e);box-shadow:inset 0 0 12px #ffd65c55}
+.upgrade{width:100%;margin-top:8px;padding:10px;border:0;border-radius:10px;font-weight:1000;background:linear-gradient(#71f6a5,#35b66e);color:#06130b}
+.upgrade:disabled{opacity:.35}
+.eventFlash{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:#02070be8;padding:20px}.eventFlash.show{display:flex}
+.eventCard{width:min(390px,92vw);min-height:310px;border:2px solid #62e7ff;border-radius:22px;background:radial-gradient(circle at 50% 0,#1b4b62,#08141d 65%);box-shadow:0 0 55px #62e7ff55;padding:22px;text-align:center;animation:cardIn .35s ease}
+.eventCard.signal{border-color:#62e7ff}.eventCard.fortune{border-color:#ffd76a;box-shadow:0 0 55px #ffd76a55}
+.eventIcon{font-size:58px;margin:12px}.eventTitle{font-size:24px;font-weight:1000;color:#fff}.eventEffect{font-size:17px;color:#ffd76a;font-weight:900;margin:15px 0}.eventDesc{font-size:12px;line-height:1.5;color:#b9dce7}.eventOk{margin-top:18px;padding:11px 22px;border:0;border-radius:12px;font-weight:1000;background:#e9f7fb;color:#071018}
+@keyframes cardIn{from{transform:translateY(35px) scale(.8);opacity:0}to{transform:none;opacity:1}}
+.market{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:#02070bea;padding:15px}.market.show{display:flex}
+.marketCard{width:min(430px,95vw);max-height:90vh;overflow:auto;background:#0b1b26;border:2px solid #ffd76a;border-radius:18px;padding:15px;box-shadow:0 0 50px #ffd76a33}
+.market h2{margin:0;color:#ffd76a}.bid{font-size:34px;font-weight:1000;text-align:center;margin:12px;color:#71f6a5}.marketBtns{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.marketBtns button,.tradeRow button{padding:10px;border:1px solid #416578;background:#143246;color:white;border-radius:10px;font-weight:800}
+.cell.mort{opacity:.55;filter:grayscale(.8)}.tradeRow{border:1px solid #29495b;border-radius:10px;padding:8px;margin:7px 0;display:flex;justify-content:space-between;align-items:center;gap:7px}.tradeRow small{color:#9cc9d6}
+
+
+.fxLayer{position:fixed;inset:0;pointer-events:none;z-index:120;overflow:hidden}
+.floatFx{position:absolute;font-weight:1000;font-size:20px;text-shadow:0 2px 8px #000;animation:floatFx 1.15s ease-out forwards}
+@keyframes floatFx{0%{transform:translate(-50%,0) scale(.6);opacity:0}18%{opacity:1;transform:translate(-50%,-8px) scale(1.15)}100%{transform:translate(-50%,-70px) scale(.9);opacity:0}}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 9px currentColor;animation:spark .75s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+.board.pulse{animation:boardPulse .45s ease}@keyframes boardPulse{50%{box-shadow:0 0 70px #62e7ff66,inset 0 0 45px #62e7ff22}}
+.token{display:inline-block}.token.hop{animation:tokenHop .28s ease}@keyframes tokenHop{50%{transform:translateY(-8px) scale(1.3);filter:drop-shadow(0 0 9px #ffd76a)}}
+.logo{animation:logoGlow 3s ease-in-out infinite}@keyframes logoGlow{50%{text-shadow:0 0 32px #ffd76aaa,0 0 10px #fff5}}
+.cell.justBuilt{animation:construct .65s ease}@keyframes construct{0%{filter:brightness(3);transform:scale(.88)}55%{transform:scale(1.06)}100%{transform:none}}
+.moneyPulse{animation:moneyPulse .45s ease}@keyframes moneyPulse{50%{transform:scale(1.18);color:#71f6a5}}
+.die.roll{animation:shake .09s linear 8}
+
+.startScreen{position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 50% 20%,#183d52,#03080c 70%);display:flex;align-items:center;justify-content:center;padding:18px}
+.startScreen.hide{display:none}.startCard{width:min(440px,95vw);border:2px solid #ffd76a;border-radius:24px;background:#091923ee;padding:22px;text-align:center;box-shadow:0 0 70px #62e7ff22}
+.startTitle{font-size:clamp(30px,10vw,54px);font-weight:1000;color:#ffd76a;letter-spacing:.06em}.startCard input,.startCard select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #426b7d;background:#07131b;color:white;font-size:16px}
+.startBtn{width:100%;padding:13px;margin-top:8px;border:0;border-radius:12px;background:linear-gradient(#ffd76a,#d6a32b);font-weight:1000;color:#171000;font-size:16px}
+.finalbar{max-width:900px;margin:6px auto 0;padding:0 8px;display:flex;gap:6px;justify-content:flex-end}.mini{padding:6px 9px;border-radius:8px;border:1px solid #31576b;background:#0d202c;color:#d8eff6;font-size:10px;font-weight:800}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:160;background:#071018;border:1px solid #62e7ff;border-radius:10px;padding:9px 14px;font-size:11px;opacity:0;pointer-events:none;transition:.2s}.toast.on{opacity:1}
+
+/* CARTOON 3D PASS 1 */
+.board{transform:perspective(1100px) rotateX(2deg);transform-origin:center center;background:radial-gradient(circle at 50% 45%,#17384a,#08141c 67%);box-shadow:0 22px 50px #000b,0 0 35px #4adfff22,inset 0 0 45px #000}
+.cell{overflow:visible!important;background:linear-gradient(145deg,#1b3d4d 0%,#102936 52%,#091a24 53%,#06131a 100%);border:1px solid #5a8496;box-shadow:inset 0 2px 0 #ffffff18,inset -3px -5px 8px #0007,0 3px 4px #0008;transform-style:preserve-3d}
+.cell:after{content:"";position:absolute;left:5%;right:5%;bottom:-4px;height:4px;background:#02080c;border-radius:0 0 4px 4px;opacity:.8}
+.cell b,.cell .price,.cell .token,.cell .buildings{position:relative;z-index:4}
+.band{height:7px!important;border-radius:3px 3px 0 0;box-shadow:0 2px 6px #0008,0 0 8px currentColor}
+.toonCity{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);z-index:2;height:24px;display:flex;align-items:flex-end;gap:2px;filter:drop-shadow(3px 4px 2px #0008)}
+.toonBld{display:block;width:9px;height:15px;border-radius:2px 2px 1px 1px;background:linear-gradient(90deg,#49cbe9,#176d8d 58%,#0a3e58);border:1px solid #8af0ff;box-shadow:inset 2px 0 #ffffff28}
+.toonBld:before{content:"";display:block;width:3px;height:3px;background:#ffe77a;box-shadow:4px 0 #ffe77a,0 5px #8dffdd,4px 5px #ffe77a;margin:3px 1px}
+.toonBld.t2{height:20px;background:linear-gradient(90deg,#a78aff,#5d46a5 60%,#30215d)}.toonBld.t3{height:24px;background:linear-gradient(90deg,#ff8c74,#b84a48 60%,#632729)}
+.toonLandmark{width:18px;height:27px;clip-path:polygon(25% 15%,40% 15%,50% 0,60% 15%,75% 15%,100% 100%,0 100%);background:linear-gradient(90deg,#ffe577,#d89528 55%,#77440c);border-radius:2px;box-shadow:0 0 10px #ffd76a}
+.toonToken{position:relative;display:inline-block;width:22px;height:22px;vertical-align:middle;filter:drop-shadow(2px 4px 2px #000b);animation:toonIdle 1.4s ease-in-out infinite}
+.toonToken.hero{border-radius:50% 50% 45% 45%;background:linear-gradient(135deg,#fff59b,#f0a81e 60%,#9b5c00);border:2px solid #fff1a2}
+.toonToken.hero:before{content:"";position:absolute;width:12px;height:7px;left:3px;top:4px;border-radius:6px;background:#173b55;border:1px solid #7ef3ff;box-shadow:0 0 5px #63eaff}
+.toonToken.hero:after{content:"";position:absolute;left:4px;bottom:-5px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #ff783f;filter:drop-shadow(0 0 4px #ffb23f)}
+.toonToken.rival{border-radius:7px;background:linear-gradient(135deg,#ff9ca8,#d93d59 58%,#68182a);border:2px solid #ffc2ca}
+.toonToken.rival:before{content:"";position:absolute;left:3px;top:5px;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:9px 0 #fff,0 0 5px #fff,9px 0 5px #fff}
+.toonToken.rival:after{content:"";position:absolute;left:6px;bottom:3px;width:7px;height:3px;border-radius:50%;background:#52101d}
+@keyframes toonIdle{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+.toonToken.hop{animation:toonHop .28s ease!important}@keyframes toonHop{50%{transform:translateY(-12px) rotate(8deg) scale(1.18)}}
+.cell.lvl1 .toonCity,.cell.lvl2 .toonCity,.cell.lvl3 .toonCity,.cell.lvl4 .toonCity{animation:cityBob 2.2s ease-in-out infinite}@keyframes cityBob{50%{transform:translateX(-50%) translateY(-2px)}}
+@media(max-width:520px){.toonCity{height:17px;bottom:2px}.toonBld{width:6px;height:10px}.toonBld.t2{height:13px}.toonBld.t3{height:16px}.toonLandmark{width:12px;height:18px}.toonToken{width:16px;height:16px}.toonToken.hero:before{width:8px;height:5px;left:2px;top:3px}.toonToken.rival:before{width:3px;height:3px;left:2px;top:3px;box-shadow:7px 0 #fff}.cell b{font-size:.9em}}
+
+/* CARTOON 3D PASS 2 — CHARACTER SPRITES */
+.toonToken{width:26px;height:32px;background:none!important;border:0!important;border-radius:0!important;animation:charIdle 1.25s ease-in-out infinite;transform-origin:50% 100%}
+.toonToken:before,.toonToken:after{content:"";position:absolute}
+.toonToken.hero:before{left:5px;top:0;width:16px;height:16px;border-radius:48% 48% 42% 42%;background:linear-gradient(135deg,#ffe08a,#d68a22);border:2px solid #fff0ad;box-shadow:inset -3px -2px #9a591e,0 2px 3px #0008}
+.toonToken.hero:after{left:3px;top:15px;width:20px;height:14px;border-radius:7px 7px 5px 5px;background:linear-gradient(90deg,#51d8ff,#167da4 65%,#0d4d69);border:2px solid #9cf1ff;box-shadow:inset -3px -2px #0b526e}
+.toonToken.rival:before{left:5px;top:0;width:16px;height:16px;border-radius:48%;background:linear-gradient(135deg,#ff9aaa,#c62f4b);border:2px solid #ffc5cd;box-shadow:inset -3px -2px #761a2d,0 2px 3px #0008}
+.toonToken.rival:after{left:3px;top:15px;width:20px;height:14px;border-radius:7px;background:linear-gradient(90deg,#9d7cff,#5939a7 65%,#311d68);border:2px solid #c9baff;box-shadow:inset -3px -2px #382175}
+.face{position:absolute;z-index:8;left:9px;top:6px;width:3px;height:3px;border-radius:50%;background:#10232d;box-shadow:7px 0 #10232d}
+.face:after{content:"";position:absolute;left:2px;top:6px;width:7px;height:3px;border-bottom:2px solid #542b18;border-radius:0 0 8px 8px}
+.arm,.leg{position:absolute;z-index:-1;border-radius:6px;transform-origin:50% 0}
+.hero .arm{background:#48bde0}.rival .arm{background:#7b5ad0}.hero .leg{background:#d18a28}.rival .leg{background:#b82f48}
+.arm{width:5px;height:14px;top:17px}.arm.l{left:1px;transform:rotate(16deg)}.arm.r{right:1px;transform:rotate(-16deg)}
+.leg{width:6px;height:11px;top:26px}.leg.l{left:6px}.leg.r{right:6px}
+.shadowBlob{position:absolute;z-index:-3;left:3px;bottom:-7px;width:22px;height:7px;border-radius:50%;background:#0008;filter:blur(1px);animation:shadowIdle 1.25s ease-in-out infinite}
+@keyframes charIdle{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+@keyframes shadowIdle{50%{transform:scale(.72);opacity:.45}}
+.toonToken.walk{animation:charWalk .24s linear infinite!important}.toonToken.walk .arm.l{animation:limbA .24s linear infinite}.toonToken.walk .arm.r{animation:limbB .24s linear infinite}.toonToken.walk .leg.l{animation:limbB .24s linear infinite}.toonToken.walk .leg.r{animation:limbA .24s linear infinite}
+@keyframes charWalk{50%{transform:translateY(-7px) rotate(4deg)}}@keyframes limbA{50%{transform:rotate(-38deg)}}@keyframes limbB{50%{transform:rotate(38deg)}}
+.toonToken.land{animation:charLand .42s ease!important}@keyframes charLand{0%{transform:translateY(-13px) scale(.9)}45%{transform:scale(1.25,.72)}75%{transform:scale(.92,1.15)}100%{transform:none}}
+.toonToken.pay{animation:charPay .55s ease!important}@keyframes charPay{30%{transform:rotate(-18deg) translateY(4px)}60%{transform:rotate(10deg) scale(.88)}}
+.toonToken.celebrate{animation:charCelebrate .55s ease-in-out 3!important}@keyframes charCelebrate{35%{transform:translateY(-13px) rotate(-10deg) scale(1.18)}70%{transform:translateY(-4px) rotate(10deg)}}
+.reaction{position:absolute;z-index:15;left:50%;top:-24px;transform:translateX(-50%);font-size:16px;animation:reactionPop .8s ease forwards;pointer-events:none}
+@keyframes reactionPop{0%{opacity:0;transform:translate(-50%,8px) scale(.4)}25%{opacity:1;transform:translate(-50%,-3px) scale(1.3)}100%{opacity:0;transform:translate(-50%,-16px) scale(.8)}}
+@media(max-width:520px){.toonToken{width:19px;height:24px}.toonToken.hero:before,.toonToken.rival:before{left:4px;width:11px;height:11px}.toonToken.hero:after,.toonToken.rival:after{left:2px;top:11px;width:15px;height:11px}.face{left:7px;top:5px;width:2px;height:2px;box-shadow:5px 0 #10232d}.face:after{left:1px;top:4px;width:6px}.arm{height:9px;top:13px;width:4px}.leg{height:8px;top:20px;width:4px}.leg.l{left:4px}.leg.r{right:4px}.shadowBlob{width:16px;bottom:-5px}}
+
+/* CARTOON 3D PASS 3 — LIVING WORLD */
+.worldFx{position:absolute;inset:14.5%;pointer-events:none;overflow:hidden;border-radius:14px;z-index:0}
+.skyLane{position:absolute;inset:0;opacity:.75}
+.flyer{position:absolute;width:30px;height:10px;border-radius:60% 70% 40% 50%;background:linear-gradient(90deg,#fff4a2,#45d9ff 45%,#12627f);box-shadow:0 0 10px #62e7ff;animation:flyAcross 10s linear infinite}
+.flyer:after{content:"";position:absolute;right:-8px;top:3px;border-left:10px solid #ff8c42;border-top:2px solid transparent;border-bottom:2px solid transparent;filter:drop-shadow(0 0 4px #ffb347)}
+.flyer.f2{top:73%;animation-duration:14s;animation-delay:-7s;transform:scale(.65)}.flyer.f1{top:16%;animation-delay:-2s}
+@keyframes flyAcross{from{left:-45px}to{left:calc(100% + 45px)}}
+.orbitDot{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff6a2;box-shadow:0 0 7px #fff;animation:orbitDot 6s linear infinite}
+.orbitDot.d1{left:20%;top:24%}.orbitDot.d2{right:17%;bottom:24%;animation-delay:-3s}@keyframes orbitDot{50%{transform:translateY(16px) scale(.6);opacity:.35}}
+.cityCore{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:45%;height:34%;border-radius:50%;background:radial-gradient(ellipse,#1e566d55,#07131a00 70%);box-shadow:0 0 35px #62e7ff15}
+.holoRing{position:absolute;left:50%;top:50%;width:62%;height:28%;border:1px solid #62e7ff38;border-radius:50%;transform:translate(-50%,-50%);animation:ringSpin 8s linear infinite}.holoRing.r2{width:42%;height:18%;border-color:#ffd76a35;animation-direction:reverse;animation-duration:6s}@keyframes ringSpin{50%{transform:translate(-50%,-50%) rotate(180deg) scale(1.04)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.billboard{position:absolute;z-index:2;padding:3px 7px;border:1px solid #61e9ff;border-radius:3px;background:#082230dd;color:#9ef5ff;font-size:7px;font-weight:900;letter-spacing:.08em;box-shadow:0 0 8px #62e7ff55;animation:billboard 2.6s steps(2) infinite}
+.billboard.b1{left:5%;top:45%;transform:rotate(-7deg)}.billboard.b2{right:4%;top:36%;transform:rotate(6deg);animation-delay:-1.2s}@keyframes billboard{50%{filter:brightness(1.8);text-shadow:0 0 5px #fff}}
+.trafficDot{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffd76a;box-shadow:0 0 5px #ffd76a;animation:traffic 5s linear infinite}.trafficDot.t1{top:82%;animation-delay:-1s}.trafficDot.t2{top:88%;animation-delay:-3s;background:#62e7ff}@keyframes traffic{from{left:8%}to{left:92%}}
+.toonBld{position:relative;overflow:hidden}.toonBld:after{content:"";position:absolute;left:-100%;top:0;width:50%;height:100%;background:linear-gradient(90deg,transparent,#ffffff55,transparent);animation:towerSweep 3.5s linear infinite}@keyframes towerSweep{to{left:150%}}
+.toonLandmark{animation:landmarkGlow 1.8s ease-in-out infinite!important}@keyframes landmarkGlow{50%{filter:brightness(1.35);box-shadow:0 0 17px #ffd76a}}
+.constructCloud{position:absolute;z-index:20;font-size:14px;animation:constructCloud .85s ease-out forwards}@keyframes constructCloud{from{transform:translateY(5px) scale(.5);opacity:1}to{transform:translateY(-22px) scale(1.5);opacity:0}}
+.rentBeam{position:fixed;z-index:119;height:3px;transform-origin:0 50%;background:linear-gradient(90deg,#ffd76a,#71f6a5);box-shadow:0 0 8px #ffd76a;pointer-events:none;animation:beam .55s ease forwards}@keyframes beam{0%{opacity:0;filter:brightness(2)}20%{opacity:1}100%{opacity:0}}
+@media(max-width:520px){.flyer{width:20px;height:7px}.billboard{font-size:5px;padding:2px 4px}.worldFx{inset:15.5%}}
+
+/* CARTOON 3D PASS 4 — CINEMATIC BOARD ACTION */
+.center{z-index:3}.board{transition:transform .35s ease,filter .35s ease}
+.board.cameraPunch{transform:perspective(900px) rotateX(5deg) scale(1.025);filter:brightness(1.12)}
+.diceStage{position:fixed;inset:0;z-index:145;pointer-events:none;display:none;align-items:center;justify-content:center;gap:22px;background:#02070b55}.diceStage.show{display:flex}
+.bigDie{width:76px;height:76px;border-radius:17px;background:linear-gradient(145deg,#fff,#d7e5ec);color:#08131a;display:grid;place-items:center;font-size:46px;font-weight:1000;box-shadow:0 18px 25px #000a,inset -7px -9px 13px #9aaab2,inset 5px 5px 10px #fff;animation:diceTumble .55s cubic-bezier(.2,.8,.2,1)}
+.bigDie:nth-child(2){animation-delay:.06s}@keyframes diceTumble{0%{transform:translateY(-120px) rotate(0) scale(.5);opacity:0}55%{transform:translateY(12px) rotate(310deg) scale(1.14)}75%{transform:translateY(-15px) rotate(345deg)}100%{transform:none;opacity:1}}
+.turnBanner{position:fixed;left:50%;top:20%;z-index:146;transform:translate(-50%,-50%) scale(.7);padding:10px 20px;border:2px solid #62e7ff;border-radius:999px;background:#071722ee;color:#fff;font-weight:1000;letter-spacing:.08em;box-shadow:0 0 25px #62e7ff55;opacity:0;pointer-events:none}
+.turnBanner.go{animation:turnBanner .9s ease forwards}@keyframes turnBanner{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%,65%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-70%) scale(.9)}}
+.coin{position:fixed;z-index:130;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6a8,#f2bf36 45%,#8b5409);border:1px solid #fff0a2;box-shadow:0 0 7px #ffd76a;pointer-events:none;animation:coinPop .8s ease-out forwards}@keyframes coinPop{to{transform:translate(var(--cx),var(--cy)) rotate(540deg) scale(.3);opacity:0}}
+.propertyFlag{position:absolute;right:2px;bottom:2px;z-index:7;width:9px;height:13px;border-left:2px solid #d7edf5}.propertyFlag:after{content:"";position:absolute;left:1px;top:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:7px solid #ffd76a}.propertyFlag.ai:after{border-left-color:#ff6577}
+.cell:hover{filter:brightness(1.15)}
+@media(max-width:520px){.bigDie{width:58px;height:58px;font-size:36px}.turnBanner{top:18%;font-size:11px}.propertyFlag{transform:scale(.75);transform-origin:bottom right}}
+
+/* CARTOON 3D PASS 5 — STREET LIFE + BIG REACTIONS */
+.weatherFx{position:absolute;inset:14.5%;z-index:1;pointer-events:none;overflow:hidden;border-radius:14px}
+.starDust{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 5px #fff;animation:starDrift 5s linear infinite}.starDust.s1{left:12%;top:15%}.starDust.s2{left:72%;top:24%;animation-delay:-2s}.starDust.s3{left:42%;top:75%;animation-delay:-4s}.starDust.s4{left:88%;top:62%;animation-delay:-1s}@keyframes starDrift{50%{transform:translate(18px,9px);opacity:.25}}
+.ped{position:absolute;z-index:2;width:7px;height:11px;border-radius:50% 50% 3px 3px;background:#79efff;box-shadow:0 0 5px #62e7ff;animation:pedWalk 8s linear infinite}.ped:after{content:"";position:absolute;left:1px;top:9px;width:2px;height:5px;background:#ffd76a;box-shadow:4px 0 #ffd76a}.ped.p1{top:68%;animation-delay:-2s}.ped.p2{top:74%;animation-delay:-6s;background:#ff8ea0}@keyframes pedWalk{from{left:7%;transform:scale(.65)}50%{transform:translateY(-2px) scale(.65)}to{left:92%;transform:scale(.65)}}
+.drone{position:absolute;z-index:4;width:15px;height:7px;border-radius:8px;background:#c8f7ff;border:1px solid #55dfff;box-shadow:0 0 7px #62e7ff;animation:dronePatrol 7s ease-in-out infinite}.drone:before,.drone:after{content:"";position:absolute;top:-3px;width:7px;height:2px;background:#ffd76a}.drone:before{left:-5px}.drone:after{right:-5px}.drone.d1{left:25%;top:28%}.drone.d2{right:20%;top:63%;animation-delay:-3.5s}@keyframes dronePatrol{50%{transform:translate(55px,-18px) rotate(8deg)}}
+.bigReaction{position:fixed;z-index:155;left:50%;top:46%;transform:translate(-50%,-50%);font-size:clamp(34px,10vw,72px);font-weight:1000;text-align:center;pointer-events:none;text-shadow:0 6px 0 #000,0 0 25px currentColor;animation:bigReaction .9s cubic-bezier(.2,.8,.2,1) forwards}@keyframes bigReaction{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-8deg)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(3deg)}70%{transform:translate(-50%,-50%) scale(.95)}100%{opacity:0;transform:translate(-50%,-65%) scale(.8)}}
+.cell.dangerFlash{animation:dangerFlash .55s ease}@keyframes dangerFlash{30%{background:#772536;filter:brightness(1.8)}}
+.cell.rewardFlash{animation:rewardFlash .55s ease}@keyframes rewardFlash{30%{background:#216947;filter:brightness(1.8)}}
+@media(max-width:520px){.weatherFx{inset:15.5%}.drone{transform:scale(.7)}.ped{transform:scale(.6)}}
+
+/* CARTOON 3D PASS 6 — PROPERTY PERSONALITIES */
+.mascot{position:absolute;z-index:10;left:50%;bottom:1px;transform:translateX(-50%);width:16px;height:18px;pointer-events:none;filter:drop-shadow(2px 3px 2px #0009);animation:mascotIdle 1.5s ease-in-out infinite}
+.mascot:before{content:"";position:absolute;left:3px;top:0;width:10px;height:10px;border-radius:50%;background:#ffe0a2;border:1px solid #fff2c6}
+.mascot:after{content:"";position:absolute;left:2px;top:9px;width:12px;height:8px;border-radius:4px;background:#48cbe9;border:1px solid #9af0ff}
+.mascot.ai:after{background:#d94c67;border-color:#ff9cab}.mascot .eyes{position:absolute;z-index:2;left:5px;top:4px;width:2px;height:2px;border-radius:50%;background:#10232d;box-shadow:4px 0 #10232d}
+@keyframes mascotIdle{50%{transform:translateX(-50%) translateY(-3px) rotate(3deg)}}
+.cell.owned:hover .mascot{animation:mascotWave .45s ease 2}@keyframes mascotWave{50%{transform:translateX(-50%) translateY(-5px) rotate(-10deg) scale(1.12)}}
+.deedScene{height:100px;margin:10px 0;border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(#163d53,#0b202d 62%,#173421 63%);border:1px solid #3e687b}
+.deedScene .miniTower{position:absolute;bottom:15px;width:24px;border:2px solid #9aefff;background:linear-gradient(90deg,#46cbe9,#145f80);border-radius:3px 3px 0 0;box-shadow:inset -5px 0 #0a435d}
+.deedScene .miniTower:after{content:"";position:absolute;left:5px;top:7px;width:4px;height:4px;background:#ffe56e;box-shadow:9px 0 #ffe56e,0 10px #8dffdd,9px 10px #ffe56e}
+.deedScene .mt1{left:17%;height:38px}.deedScene .mt2{left:42%;height:58px}.deedScene .mt3{right:17%;height:46px}
+.deedScene .miniShip{position:absolute;top:19px;left:-30px;width:26px;height:8px;border-radius:60%;background:#d9f9ff;box-shadow:0 0 8px #62e7ff;animation:miniShip 4s linear infinite}@keyframes miniShip{to{left:110%}}
+.deedScene .miniOwner{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);font-size:9px;font-weight:900;color:#fff;background:#07131bcc;border:1px solid #62e7ff;border-radius:8px;padding:2px 6px}
+.confetti{position:fixed;z-index:170;width:8px;height:12px;background:#ffd76a;pointer-events:none;animation:confetti 1.2s ease-out forwards}@keyframes confetti{to{transform:translate(var(--x),var(--y)) rotate(720deg);opacity:0}}
+@media(max-width:520px){.mascot{width:11px;height:13px}.mascot:before{left:2px;width:7px;height:7px}.mascot:after{left:1px;top:6px;width:9px;height:6px}.mascot .eyes{left:4px;top:3px;transform:scale(.7)}}
+
+/* CARTOON 3D PASS 7 — DISTRICT THEMES + VEHICLES */
+.cell[data-theme="neon"] .toonBld{background:linear-gradient(90deg,#d090ff,#6d2ea7 60%,#351553);border-color:#e7baff}
+.cell[data-theme="solar"] .toonBld{background:linear-gradient(90deg,#ffe77b,#d8891c 60%,#71430a);border-color:#fff1a8}
+.cell[data-theme="aurora"] .toonBld{background:linear-gradient(90deg,#ff91bd,#b83d78 60%,#64213f);border-color:#ffc0d8}
+.cell[data-theme="orbital"] .toonBld{background:linear-gradient(90deg,#83efff,#2082a1 60%,#0e485f)}
+.cell[data-theme="eclipse"] .toonBld{background:linear-gradient(90deg,#a5a8ff,#4f55a6 60%,#282c67);border-color:#d0d2ff}
+.cell[data-theme="crown"] .toonBld{background:linear-gradient(90deg,#8effba,#2b9d5e 60%,#145332);border-color:#c0ffd6}
+.cell[data-theme="transit"]{background:linear-gradient(145deg,#364853,#182832 55%,#09141a)}
+.cell[data-theme="utility"]{background:linear-gradient(145deg,#234c43,#102d28 55%,#081916)}
+.tinyVehicle{position:absolute;z-index:8;left:3px;bottom:3px;width:13px;height:7px;border-radius:6px 6px 3px 3px;background:#ffd76a;border:1px solid #fff0a2;box-shadow:0 0 5px #ffd76a;animation:vehicleBob 1s ease-in-out infinite}
+.tinyVehicle:before,.tinyVehicle:after{content:"";position:absolute;bottom:-3px;width:4px;height:4px;border-radius:50%;background:#071018}.tinyVehicle:before{left:1px}.tinyVehicle:after{right:1px}
+.tinyVehicle.rail{width:17px;background:#d8f5ff;border-color:#62e7ff;box-shadow:0 0 5px #62e7ff}.tinyVehicle.energy{width:10px;height:10px;border-radius:50%;background:#71f6a5;box-shadow:0 0 9px #71f6a5;animation:energyPulse .8s ease-in-out infinite}
+@keyframes vehicleBob{50%{transform:translateY(-2px) rotate(2deg)}}@keyframes energyPulse{50%{transform:scale(1.25);filter:brightness(1.5)}}
+.zoneLabel{position:absolute;z-index:6;left:50%;top:9px;transform:translateX(-50%);font-size:5px;font-weight:1000;letter-spacing:.06em;opacity:.55;white-space:nowrap}
+.cell.lvl4 .zoneLabel{color:#ffd76a;opacity:.9}
+.districtPulse{position:absolute;inset:0;border:2px solid #ffd76a;z-index:12;pointer-events:none;animation:districtPulse .9s ease forwards}@keyframes districtPulse{0%{opacity:0;box-shadow:inset 0 0 0 #ffd76a}35%{opacity:1;box-shadow:inset 0 0 18px #ffd76a}100%{opacity:0}}
+@media(max-width:520px){.tinyVehicle{transform:scale(.7);transform-origin:bottom left}.zoneLabel{display:none}}
+
+/* CARTOON 3D PASS 8 — SPECIAL SPACES + PORTALS */
+.specialIcon{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;filter:drop-shadow(0 0 6px #62e7ff);animation:specialFloat 1.8s ease-in-out infinite;pointer-events:none}
+@keyframes specialFloat{50%{transform:translate(-50%,-62%) scale(1.12)}}
+.cell[data-theme="special"]{background:radial-gradient(circle at 50% 45%,#183c52,#0b202c 65%,#06131a)}
+.portalRing{position:absolute;z-index:3;left:50%;top:52%;width:28px;height:12px;border:2px solid #62e7ff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 8px #62e7ff,inset 0 0 6px #62e7ff;animation:portalSpin 1.4s linear infinite}
+.portalRing:after{content:"";position:absolute;inset:2px;border:1px dashed #ffd76a;border-radius:50%}@keyframes portalSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.cell.holdingCell{background:repeating-linear-gradient(90deg,#17232a 0 6px,#081118 6px 10px)}.cell.holdingCell:before{content:"";position:absolute;inset:5px;border:2px solid #7b8d95;border-radius:4px;opacity:.45}
+.cell.launchCell{background:radial-gradient(circle,#2c6d55,#0b2a25 60%,#061612)}.cell.launchCell .specialIcon{animation:launchPulse 1s ease-in-out infinite}@keyframes launchPulse{50%{filter:drop-shadow(0 0 14px #71f6a5);transform:translate(-50%,-55%) scale(1.18)}}
+.cell.freeCell{background:radial-gradient(circle,#604b18,#28200c 62%,#151006)}.cell.freeCell .specialIcon{filter:drop-shadow(0 0 8px #ffd76a)}
+.cell.gotoCell{background:radial-gradient(circle,#642333,#2d1119 62%,#16080c)}.cell.gotoCell .specialIcon{filter:drop-shadow(0 0 8px #ff6577);animation:warningShake .7s ease-in-out infinite}@keyframes warningShake{25%{transform:translate(-55%,-50%) rotate(-6deg)}75%{transform:translate(-45%,-50%) rotate(6deg)}}
+.warpFx{position:fixed;z-index:165;left:50%;top:50%;width:20px;height:20px;border:4px solid #62e7ff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 20px #62e7ff,inset 0 0 15px #62e7ff;animation:warpFx .7s ease-out forwards;pointer-events:none}@keyframes warpFx{to{width:120vw;height:120vw;opacity:0;border-width:1px}}
+@media(max-width:520px){.specialIcon{font-size:12px}.portalRing{width:18px;height:8px}}
+
+/* CARTOON 3D PASS 9 — CAMERA MODES + DAY/NIGHT PULSE */
+.boardWrap3d{perspective:1200px}.board.cinematicTilt{animation:cinematicTilt 1.1s ease}@keyframes cinematicTilt{0%,100%{transform:perspective(1100px) rotateX(2deg) rotateZ(0)}35%{transform:perspective(900px) rotateX(7deg) rotateZ(-1.2deg) scale(1.025)}70%{transform:perspective(1000px) rotateX(4deg) rotateZ(1deg)}}
+.board.nightPulse{filter:brightness(.82) saturate(1.2)}.board.nightPulse .worldFx{background:radial-gradient(circle,#153e5555,#02070b22)}
+.moonOrb{position:absolute;right:12%;top:11%;z-index:1;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#b8eaff 55%,#5d8ea8);box-shadow:0 0 18px #b8eaff;animation:moonFloat 5s ease-in-out infinite}@keyframes moonFloat{50%{transform:translateY(8px);opacity:.7}}
+.searchBeam{position:absolute;z-index:1;left:50%;top:20%;width:3px;height:48%;background:linear-gradient(#62e7ff88,transparent);transform-origin:top;animation:searchBeam 5s ease-in-out infinite;filter:blur(1px)}@keyframes searchBeam{0%,100%{transform:rotate(-48deg)}50%{transform:rotate(48deg)}}
+.roundFlash{position:fixed;z-index:168;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 30%,#62e7ff33);opacity:0;animation:roundFlash .7s ease}@keyframes roundFlash{35%{opacity:1}100%{opacity:0}}
+.comboBadge{position:fixed;right:12px;bottom:14px;z-index:130;background:#07131be8;border:1px solid #ffd76a;border-radius:12px;padding:7px 10px;color:#ffd76a;font-size:10px;font-weight:1000;box-shadow:0 0 14px #ffd76a33;transform:translateY(60px);transition:.25s}.comboBadge.show{transform:none}
+
+/* CARTOON 3D PASS 10 — FINAL POLISH */
+.startCard{animation:startFloat 3.2s ease-in-out infinite}@keyframes startFloat{50%{transform:translateY(-5px);box-shadow:0 0 85px #62e7ff33}}
+.startTitle{background:linear-gradient(180deg,#fff6b8,#ffd76a 45%,#bd7417);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 #3c2608)}
+.cell{transition:filter .16s ease,transform .16s ease}.cell:active{transform:translateY(2px) scale(.98)}
+.finalShine{position:fixed;z-index:180;inset:-40%;pointer-events:none;background:linear-gradient(115deg,transparent 43%,#ffffff22 49%,#ffffff66 50%,#ffffff22 51%,transparent 57%);transform:translateX(-60%);animation:finalShine 1.2s ease forwards}@keyframes finalShine{to{transform:translateX(60%)}}
+.crownFx{position:fixed;z-index:175;font-size:28px;pointer-events:none;animation:crownFall 1.8s ease-in forwards}@keyframes crownFall{0%{transform:translateY(-50px) rotate(0);opacity:0}15%{opacity:1}to{transform:translateY(110vh) rotate(500deg);opacity:.1}}
+.screenShake{animation:screenShake .34s linear}@keyframes screenShake{0%,100%{transform:translate(0)}25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
+.gameCompleteStamp{font-size:11px;text-align:center;color:#ffd76a;letter-spacing:.15em;font-weight:1000;margin-top:5px;text-shadow:0 0 9px #ffd76a55}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+/* GRAPHICS COUNTDOWN — PHASE 20: ART DIRECTION RESET */
+:root{
+ --ink:#061018;--panel:#0b1b25;--panel2:#102a37;--cyan:#67e9ff;
+ --gold:#ffd66b;--cream:#fff1bd;--danger:#ff667b;--good:#73f2aa;
+ --outline:#031016;--soft:#a9d4df;
+}
+body{
+ background:
+ radial-gradient(circle at 50% -15%,#214b60 0,#0b202b 32%,#03090d 68%),
+ linear-gradient(#06121a,#020608);
+}
+.wrap{filter:drop-shadow(0 28px 25px #0009)}
+.board{
+ border:3px solid #345d70!important;
+ border-radius:22px!important;
+ background:radial-gradient(circle at 50% 46%,#16394a,#081923 68%)!important;
+ box-shadow:0 28px 65px #000c,0 0 0 5px #07151d,0 0 45px #67e9ff20,inset 0 0 55px #0008!important;
+}
+.cell{
+ border:1px solid #51788a!important;
+ border-radius:5px;
+ color:#edfaff;
+ text-shadow:0 2px 2px #000;
+ background:linear-gradient(145deg,#1a3a49,#102834 55%,#071821 56%,#06131a)!important;
+ box-shadow:inset 0 2px 0 #ffffff16,inset -4px -5px 8px #0007,0 4px 0 #02090d!important;
+}
+.cell b{font-weight:1000;letter-spacing:.015em}
+.cell .price{color:#d6edf3;font-weight:900}
+.band{border:1px solid #ffffff42;box-shadow:0 2px 0 #0009,0 0 9px currentColor!important}
+.center{
+ border:2px solid #2f6074!important;
+ border-radius:18px!important;
+ background:linear-gradient(160deg,#102b38e8,#07141ce8)!important;
+ box-shadow:0 16px 35px #000b,inset 0 1px #ffffff17,0 0 28px #67e9ff12!important;
+ backdrop-filter:blur(3px);
+}
+.logo{
+ font-weight:1000!important;
+ letter-spacing:.08em!important;
+ background:linear-gradient(#fff5bd,#ffd66b 48%,#b86f15);
+ -webkit-background-clip:text;background-clip:text;color:transparent!important;
+ filter:drop-shadow(0 4px 0 #3b2408) drop-shadow(0 0 10px #ffd66b44);
+}
+.btn,.mini,.startBtn,.marketBtns button,.tradeRow button,.close{
+ border-width:2px!important;
+ box-shadow:inset 0 2px #ffffff19,0 4px 0 #02080c,0 6px 12px #0006!important;
+ transition:transform .12s ease,filter .12s ease!important;
+}
+.btn:active,.mini:active,.startBtn:active,.marketBtns button:active,.tradeRow button:active,.close:active{
+ transform:translateY(3px)!important;box-shadow:inset 0 1px #ffffff14,0 1px 0 #02080c!important
+}
+.stat{
+ border:1px solid #31586a!important;
+ background:linear-gradient(#102b38,#091b25)!important;
+ box-shadow:inset 0 1px #ffffff12,0 3px 7px #0007;
+ border-radius:10px!important;
+}
+.stat b{color:var(--cream)!important;text-shadow:0 0 8px #ffd66b33}
+.marketCard,.deed>div{
+ border-width:2px!important;
+ box-shadow:0 24px 60px #000d,inset 0 1px #ffffff16!important;
+}
+.toonBld{
+ border-width:2px!important;
+ box-shadow:inset 2px 0 #ffffff38,inset -3px 0 #0004,3px 4px 0 #02090c!important;
+}
+.toonLandmark{border:2px solid #fff0a4!important}
+.toonToken{filter:drop-shadow(0 5px 1px #0009) drop-shadow(0 0 5px #ffffff15)!important}
+.toonToken.hero:before,.toonToken.rival:before{border-width:2px!important}
+.toonToken.hero:after,.toonToken.rival:after{border-width:2px!important}
+.mascot{filter:drop-shadow(1px 3px 0 #0009)!important}
+.propertyFlag{filter:drop-shadow(1px 2px 0 #000)}
+.billboard{border-width:2px!important;box-shadow:0 3px 0 #02090d,0 0 9px #67e9ff44!important}
+.worldFx:after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(110deg,transparent 0 44%,#ffffff08 48%,transparent 52% 100%);
+ animation:worldSheen 8s linear infinite;
+}
+@keyframes worldSheen{from{transform:translateX(-70%)}to{transform:translateX(70%)}}
+.gameCompleteStamp{
+ padding:5px 12px;width:max-content;max-width:90%;margin:7px auto;
+ border:1px solid #8a6b25;border-radius:999px;
+ background:#1a160bdd;color:#ffe48c!important;
+ box-shadow:inset 0 1px #fff2b526,0 3px 8px #0008;
+}
+.startCard{
+ border:3px solid #d9aa42!important;
+ background:linear-gradient(160deg,#102a37f2,#07151df5)!important;
+ box-shadow:0 28px 80px #000d,0 0 45px #67e9ff1d,inset 0 1px #ffffff1c!important;
+}
+.startTitle{letter-spacing:.09em!important}
+@media(max-width:520px){
+ .board{border-width:2px!important;border-radius:13px!important}
+ .cell{border-radius:3px;box-shadow:inset 0 1px #ffffff15,inset -2px -3px 5px #0006,0 2px 0 #02090d!important}
+ .center{border-radius:10px!important}
+ .btn,.mini{box-shadow:inset 0 1px #ffffff16,0 2px 0 #02080c!important}
+}
+
+/* GRAPHICS COUNTDOWN — PHASE 19: COMMANDER SPRITE REBUILD */
+.toonToken.hero{
+ width:34px!important;height:45px!important;
+ filter:drop-shadow(0 7px 2px #000a) drop-shadow(0 0 7px #67e9ff38)!important;
+ transform-origin:50% 100%;
+}
+.toonToken.hero:before{
+ left:7px!important;top:0!important;width:20px!important;height:20px!important;
+ border-radius:48% 48% 43% 43%!important;
+ background:linear-gradient(135deg,#ffe8a7 0 40%,#d8942f 41% 73%,#8f5319 74%)!important;
+ border:2px solid #fff3c5!important;
+ box-shadow:inset -4px -3px #9b5b20,0 3px 0 #061018,0 0 8px #ffd66b55!important;
+}
+.toonToken.hero:after{
+ left:4px!important;top:19px!important;width:26px!important;height:19px!important;
+ border-radius:9px 9px 6px 6px!important;
+ background:linear-gradient(90deg,#78ecff 0 18%,#258daf 19% 67%,#10546f 68% 100%)!important;
+ border:2px solid #b9f6ff!important;
+ box-shadow:inset 4px 0 #ffffff25,inset -5px -3px #08394e,0 4px 0 #041017!important;
+}
+.hero .face{
+ left:11px!important;top:7px!important;width:3px!important;height:3px!important;
+ background:#10232d!important;box-shadow:9px 0 #10232d!important;
+}
+.hero .face:before{
+ content:"";position:absolute;left:-3px;top:-4px;width:18px;height:8px;
+ border-radius:8px 8px 3px 3px;border-top:3px solid #71431e;
+ transform:rotate(-3deg);
+}
+.hero .face:after{
+ left:3px!important;top:7px!important;width:8px!important;height:4px!important;
+ border-bottom:2px solid #6e341c!important;
+}
+.hero .arm{
+ top:21px!important;width:6px!important;height:18px!important;
+ background:linear-gradient(90deg,#70e9ff,#197d9e 70%)!important;
+ border:1px solid #aaf4ff;
+ box-shadow:0 2px 0 #061018;
+}
+.hero .arm.l{left:0!important;transform:rotate(13deg)}
+.hero .arm.r{right:0!important;transform:rotate(-13deg)}
+.hero .leg{
+ top:35px!important;width:8px!important;height:14px!important;
+ background:linear-gradient(90deg,#e5a53c,#965617 72%)!important;
+ border:1px solid #ffd98a;
+ box-shadow:0 3px 0 #061018;
+}
+.hero .leg.l{left:7px!important}.hero .leg.r{right:7px!important}
+.hero .shadowBlob{left:4px!important;bottom:-8px!important;width:29px!important;height:8px!important}
+.commanderVisor{
+ position:absolute;z-index:10;left:9px;top:5px;width:17px;height:8px;
+ border-radius:6px;background:linear-gradient(90deg,#0b3145,#66eaff 55%,#143c52);
+ border:1px solid #baf7ff;opacity:.82;box-shadow:0 0 5px #67e9ff;
+}
+.commanderBadge{
+ position:absolute;z-index:11;left:14px;top:24px;width:6px;height:6px;
+ border-radius:50%;background:#ffd66b;border:1px solid #fff2b0;
+ box-shadow:0 0 6px #ffd66b;
+}
+.commanderPack{
+ position:absolute;z-index:-2;right:1px;top:22px;width:8px;height:13px;
+ border-radius:3px;background:#0a4058;border:1px solid #5bdcf4;
+ box-shadow:3px 3px 0 #031016;
+}
+.commanderBoot{
+ position:absolute;z-index:4;top:45px;width:10px;height:5px;
+ border-radius:2px;background:#172832;border:1px solid #5a7480;
+}
+.commanderBoot.bl{left:4px}.commanderBoot.br{right:4px}
+.toonToken.hero.celebrate .commanderBadge{animation:badgeFlash .2s linear infinite}
+@keyframes badgeFlash{50%{transform:scale(1.7);filter:brightness(2)}}
+.toonToken.hero.walk .commanderPack{animation:packGlow .24s linear infinite}
+@keyframes packGlow{50%{box-shadow:3px 3px 0 #031016,0 0 10px #67e9ff}}
+@media(max-width:520px){
+ .toonToken.hero{width:24px!important;height:32px!important}
+ .toonToken.hero:before{left:5px!important;width:14px!important;height:14px!important}
+ .toonToken.hero:after{left:3px!important;top:13px!important;width:18px!important;height:14px!important}
+ .hero .face{left:8px!important;top:5px!important;transform:scale(.72)}
+ .hero .arm{top:15px!important;height:12px!important;width:4px!important}
+ .hero .leg{top:25px!important;height:10px!important;width:5px!important}
+ .hero .leg.l{left:5px!important}.hero .leg.r{right:5px!important}
+ .commanderVisor{left:6px;top:4px;width:12px;height:6px}
+ .commanderBadge{left:10px;top:17px;width:4px;height:4px}
+ .commanderPack{top:16px;width:6px;height:9px}
+ .commanderBoot{top:31px;width:7px;height:4px}.commanderBoot.bl{left:3px}.commanderBoot.br{right:3px}
+}
+
+/* GRAPHICS COUNTDOWN — PHASE 18: RIVAL SPRITE REBUILD */
+.toonToken.rival{
+ width:35px!important;height:46px!important;
+ filter:drop-shadow(0 7px 2px #000a) drop-shadow(0 0 8px #ff667b3d)!important;
+ transform-origin:50% 100%;
+}
+.toonToken.rival:before{
+ left:6px!important;top:0!important;width:22px!important;height:19px!important;
+ border-radius:10px 10px 7px 7px!important;
+ background:linear-gradient(145deg,#ffb0bc 0 20%,#d74460 21% 68%,#721b30 69%)!important;
+ border:2px solid #ffd0d7!important;
+ box-shadow:inset -4px -3px #771b30,0 3px 0 #061018,0 0 9px #ff667b55!important;
+}
+.toonToken.rival:after{
+ left:3px!important;top:18px!important;width:28px!important;height:21px!important;
+ border-radius:7px 7px 9px 9px!important;
+ background:linear-gradient(90deg,#b79aff 0 18%,#6547bd 19% 65%,#31206e 66%)!important;
+ border:2px solid #d8caff!important;
+ box-shadow:inset 4px 0 #ffffff20,inset -5px -3px #281858,0 4px 0 #041017!important;
+}
+.rival .face{
+ left:10px!important;top:6px!important;width:4px!important;height:4px!important;
+ background:#fff5f6!important;box-shadow:10px 0 #fff5f6!important;
+}
+.rival .face:before{
+ content:"";position:absolute;left:-3px;top:-2px;width:18px;height:4px;
+ border-top:2px solid #481020;border-radius:50%;transform:rotate(4deg)
+}
+.rival .face:after{
+ left:4px!important;top:8px!important;width:8px!important;height:3px!important;
+ border:0!important;border-top:2px solid #4c1020!important;border-radius:50%!important;
+}
+.rival .arm{
+ top:20px!important;width:7px!important;height:19px!important;
+ background:linear-gradient(90deg,#9f82f1,#5237a1 72%)!important;
+ border:1px solid #d7c9ff;box-shadow:0 2px 0 #061018;
+}
+.rival .arm.l{left:-1px!important;transform:rotate(18deg)}
+.rival .arm.r{right:-1px!important;transform:rotate(-18deg)}
+.rival .leg{
+ top:36px!important;width:8px!important;height:14px!important;
+ background:linear-gradient(90deg,#d94b65,#8a2039 72%)!important;
+ border:1px solid #ff9daf;box-shadow:0 3px 0 #061018;
+}
+.rival .leg.l{left:7px!important}.rival .leg.r{right:7px!important}
+.rival .shadowBlob{left:4px!important;bottom:-8px!important;width:29px!important;height:8px!important}
+.rivalHorn{
+ position:absolute;z-index:-1;top:-6px;width:8px;height:11px;
+ background:linear-gradient(#e9dcff,#7b60bc);border:1px solid #f6efff;
+ clip-path:polygon(50% 0,100% 100%,0 100%);
+}
+.rivalHorn.hl{left:5px;transform:rotate(-18deg)}.rivalHorn.hr{right:5px;transform:rotate(18deg)}
+.rivalEyeGlow{
+ position:absolute;z-index:12;left:8px;top:6px;width:18px;height:6px;
+ border-radius:5px;background:linear-gradient(90deg,#ff445f,#fff 50%,#ff445f);
+ opacity:.48;box-shadow:0 0 8px #ff405d;animation:rivalScan 1.8s ease-in-out infinite;
+}
+@keyframes rivalScan{50%{opacity:.9;filter:brightness(1.7);transform:scaleX(.82)}}
+.rivalCore{
+ position:absolute;z-index:12;left:14px;top:25px;width:7px;height:7px;
+ transform:rotate(45deg);background:#ff526c;border:1px solid #ffd0d7;
+ box-shadow:0 0 8px #ff526c;animation:rivalCore 1s ease-in-out infinite;
+}
+@keyframes rivalCore{50%{transform:rotate(225deg) scale(1.25);filter:brightness(1.7)}}
+.rivalCape{
+ position:absolute;z-index:-3;left:8px;top:19px;width:22px;height:27px;
+ background:linear-gradient(135deg,#511535,#210c2b);border:1px solid #9d456f;
+ clip-path:polygon(0 0,85% 5%,100% 100%,45% 80%,0 100%);
+ transform-origin:top;animation:rivalCape 1.5s ease-in-out infinite;
+}
+@keyframes rivalCape{50%{transform:skewX(-7deg) translateX(2px)}}
+.rivalBoot{position:absolute;z-index:4;top:46px;width:10px;height:5px;border-radius:2px;background:#25142e;border:1px solid #745083}
+.rivalBoot.bl{left:4px}.rivalBoot.br{right:4px}
+.toonToken.rival.walk .rivalCape{animation:rivalCapeRun .24s linear infinite}
+@keyframes rivalCapeRun{50%{transform:skewX(-20deg) translateX(5px)}}
+.toonToken.rival.celebrate .rivalCore{animation:rivalVictoryCore .18s linear infinite}
+@keyframes rivalVictoryCore{50%{box-shadow:0 0 18px #ff526c;filter:brightness(2.2)}}
+@media(max-width:520px){
+ .toonToken.rival{width:25px!important;height:33px!important}
+ .toonToken.rival:before{left:4px!important;width:16px!important;height:14px!important}
+ .toonToken.rival:after{left:2px!important;top:13px!important;width:20px!important;height:15px!important}
+ .rival .face{left:7px!important;top:5px!important;transform:scale(.7)}
+ .rival .arm{top:15px!important;width:4px!important;height:12px!important}
+ .rival .leg{top:26px!important;width:5px!important;height:10px!important}
+ .rival .leg.l{left:5px!important}.rival .leg.r{right:5px!important}
+ .rivalHorn{top:-4px;width:6px;height:8px}.rivalEyeGlow{left:6px;top:5px;width:13px;height:4px}
+ .rivalCore{left:10px;top:18px;width:5px;height:5px}.rivalCape{left:6px;top:14px;width:16px;height:19px}
+ .rivalBoot{top:32px;width:7px;height:4px}.rivalBoot.bl{left:3px}.rivalBoot.br{right:3px}
+}
+
+/* GRAPHICS COUNTDOWN — PHASE 17: CHARACTER MOVEMENT OVERHAUL */
+.toonToken.preMove{animation:preMove .18s ease forwards!important}
+@keyframes preMove{to{transform:translateY(3px) scale(1.12,.78) rotate(-4deg)}}
+.toonToken.walk{animation:travelBounce .22s linear infinite!important}
+@keyframes travelBounce{
+ 0%,100%{transform:translateY(0) rotate(-5deg) scale(1,1)}
+ 25%{transform:translateY(-8px) rotate(3deg) scale(.94,1.06)}
+ 50%{transform:translateY(-3px) rotate(6deg) scale(1.06,.94)}
+ 75%{transform:translateY(-9px) rotate(-2deg) scale(.95,1.05)}
+}
+.toonToken.walk .arm.l{animation:armStrideL .22s linear infinite!important}
+.toonToken.walk .arm.r{animation:armStrideR .22s linear infinite!important}
+.toonToken.walk .leg.l{animation:legStrideL .22s linear infinite!important}
+.toonToken.walk .leg.r{animation:legStrideR .22s linear infinite!important}
+@keyframes armStrideL{0%,100%{transform:rotate(34deg)}50%{transform:rotate(-42deg)}}
+@keyframes armStrideR{0%,100%{transform:rotate(-42deg)}50%{transform:rotate(34deg)}}
+@keyframes legStrideL{0%,100%{transform:rotate(-27deg) translateY(0)}50%{transform:rotate(30deg) translateY(-2px)}}
+@keyframes legStrideR{0%,100%{transform:rotate(30deg) translateY(-2px)}50%{transform:rotate(-27deg) translateY(0)}}
+.toonToken.land{animation:heroLanding .48s cubic-bezier(.2,.8,.2,1)!important}
+@keyframes heroLanding{
+ 0%{transform:translateY(-18px) scale(.82,1.18)}
+ 42%{transform:translateY(3px) scale(1.28,.67)}
+ 68%{transform:translateY(-5px) scale(.9,1.13)}
+ 100%{transform:none}
+}
+.toonToken.rival.land{animation:rivalLanding .5s cubic-bezier(.2,.8,.2,1)!important}
+@keyframes rivalLanding{
+ 0%{transform:translateY(-20px) rotate(9deg) scale(.85,1.15)}
+ 40%{transform:translateY(4px) rotate(-4deg) scale(1.3,.65)}
+ 70%{transform:translateY(-4px) rotate(2deg) scale(.92,1.1)}
+ 100%{transform:none}
+}
+.stepTrail{
+ position:fixed;z-index:118;width:10px;height:10px;border-radius:50%;
+ pointer-events:none;transform:translate(-50%,-50%);
+ background:radial-gradient(circle,#fff 0 20%,#67e9ff 21% 48%,transparent 50%);
+ box-shadow:0 0 10px #67e9ff;animation:stepTrail .48s ease-out forwards
+}
+.stepTrail.ai{background:radial-gradient(circle,#fff 0 20%,#ff667b 21% 48%,transparent 50%);box-shadow:0 0 10px #ff667b}
+@keyframes stepTrail{to{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+.speedLine{
+ position:fixed;z-index:117;height:2px;width:32px;pointer-events:none;
+ transform-origin:0 50%;background:linear-gradient(90deg,#67e9ff,transparent);
+ box-shadow:0 0 5px #67e9ff;animation:speedLine .34s ease-out forwards
+}
+.speedLine.ai{background:linear-gradient(90deg,#ff667b,transparent);box-shadow:0 0 5px #ff667b}
+@keyframes speedLine{to{transform:translateX(-25px) scaleX(.25);opacity:0}}
+.landRing{
+ position:fixed;z-index:116;width:18px;height:8px;border:2px solid #67e9ff;border-radius:50%;
+ transform:translate(-50%,-50%);pointer-events:none;animation:landRing .55s ease-out forwards
+}
+.landRing.ai{border-color:#ff667b}
+@keyframes landRing{to{width:70px;height:25px;opacity:0}}
+.toonToken.movingRight{transform-origin:60% 100%}.toonToken.movingLeft{transform-origin:40% 100%}
+.toonToken.movingRight.walk{filter:drop-shadow(-7px 7px 2px #0008) drop-shadow(0 0 8px #67e9ff44)!important}
+.toonToken.movingLeft.walk{filter:drop-shadow(7px 7px 2px #0008) drop-shadow(0 0 8px #67e9ff44)!important}
+.toonToken.rival.movingRight.walk{filter:drop-shadow(-7px 7px 2px #0008) drop-shadow(0 0 8px #ff667b44)!important}
+.toonToken.rival.movingLeft.walk{filter:drop-shadow(7px 7px 2px #0008) drop-shadow(0 0 8px #ff667b44)!important}
+
+/* GRAPHICS COUNTDOWN — PHASE 16: EMOTIONS + REACTIONS */
+.toonToken.reactHappy{animation:reactHappy .65s ease!important}
+@keyframes reactHappy{25%{transform:translateY(-12px) rotate(-8deg) scale(1.15)}50%{transform:translateY(-3px) rotate(8deg)}75%{transform:translateY(-10px) rotate(-4deg)}}
+.toonToken.reactShock{animation:reactShock .65s ease!important}
+@keyframes reactShock{18%{transform:translateY(-8px) scale(1.18)}35%,65%{transform:translateX(-3px) rotate(-5deg)}50%,80%{transform:translateX(3px) rotate(5deg)}}
+.toonToken.reactAngry{animation:reactAngry .6s ease!important}
+@keyframes reactAngry{20%,60%{transform:translateY(3px) rotate(-6deg) scale(1.08,.9)}40%,80%{transform:translateY(2px) rotate(6deg) scale(1.08,.9)}}
+.toonToken.reactBroke{animation:reactBroke .9s ease!important}
+@keyframes reactBroke{35%{transform:translateY(5px) rotate(12deg) scale(.88)}70%{transform:translateY(7px) rotate(-7deg) scale(.82,.92)}}
+.toonToken.reactJail{animation:reactJail .8s ease!important;filter:grayscale(.55) drop-shadow(0 6px 2px #000b)!important}
+@keyframes reactJail{25%{transform:translateY(3px) rotate(-8deg)}50%{transform:translateY(3px) rotate(8deg)}75%{transform:translateY(5px) scale(.9)}}
+.toonToken.reactRich{animation:reactRich .8s ease!important}
+@keyframes reactRich{20%{transform:translateY(-10px) scale(1.12)}45%{transform:rotate(-10deg) scale(1.16)}70%{transform:rotate(10deg) scale(1.12)}}
+.toonToken.reactVictory{animation:reactVictory .75s ease-in-out 3!important}
+@keyframes reactVictory{25%{transform:translateY(-16px) rotate(-12deg) scale(1.2)}50%{transform:translateY(-5px) rotate(12deg)}75%{transform:translateY(-13px) rotate(-6deg) scale(1.14)}}
+.emoteBubble{
+ position:fixed;z-index:158;min-width:38px;height:31px;padding:2px 7px;border-radius:16px 16px 16px 4px;
+ display:grid;place-items:center;background:#fff;color:#07131b;border:3px solid #07131b;
+ font-size:20px;font-weight:1000;box-shadow:0 5px 0 #0007;pointer-events:none;
+ animation:emoteBubble .95s cubic-bezier(.2,.8,.2,1) forwards
+}
+.emoteBubble.ai{border-color:#5b1730;background:#ffe4e8}
+@keyframes emoteBubble{
+ 0%{opacity:0;transform:translate(-50%,8px) scale(.2)}
+ 20%,70%{opacity:1;transform:translate(-50%,-7px) scale(1)}
+ 100%{opacity:0;transform:translate(-50%,-25px) scale(.8)}
+}
+.angerMark{position:absolute;z-index:20;right:-7px;top:-8px;color:#ff516b;font-size:13px;font-weight:1000;text-shadow:0 0 5px #ff516b}
+.sweatDrop{position:absolute;z-index:20;right:-5px;top:4px;width:6px;height:9px;background:#68dcff;border-radius:60% 40% 60% 40%;transform:rotate(35deg);box-shadow:0 0 5px #68dcff}
+.jailBarsFx{position:fixed;z-index:157;width:42px;height:52px;border:3px solid #7e929b;border-radius:5px;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 7px,#aabac1 7px 10px);animation:jailBarsFx .9s ease forwards}
+@keyframes jailBarsFx{0%{opacity:0;transform:translateY(-15px)}25%,75%{opacity:.85;transform:none}100%{opacity:0;transform:translateY(8px)}}
+
+/* GRAPHICS COUNTDOWN — PHASE 15: PROPERTY SPRITE OVERHAUL */
+.propertyScene{position:absolute;inset:16px 3px 3px;z-index:1;pointer-events:none;overflow:hidden;border-radius:3px}
+.propertyScene .ground{position:absolute;left:3%;right:3%;bottom:0;height:7px;border-radius:50%;background:#06101799;box-shadow:0 -2px 7px #0007}
+.propSprite{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);filter:drop-shadow(3px 4px 1px #0009)}
+.propSprite:before,.propSprite:after{content:"";position:absolute}
+.propSprite.shop{width:29px;height:20px;border:2px solid #c6f5ff;border-radius:3px;background:linear-gradient(90deg,#42c8e8,#176f8c 70%);box-shadow:inset -5px 0 #0b455c}
+.propSprite.shop:before{left:-3px;top:-7px;width:31px;height:9px;background:repeating-linear-gradient(90deg,#fff0a5 0 6px,#ef6c72 6px 12px);border:1px solid #fff3c5;border-radius:4px 4px 2px 2px}
+.propSprite.shop:after{left:5px;bottom:0;width:7px;height:11px;background:#102a36;box-shadow:12px -2px 0 #9df3ff}
+.propSprite.tower{width:22px;height:30px;border:2px solid #bff6ff;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,#6deaff,#1b7c9e 62%,#0b4058)}
+.propSprite.tower:before{left:4px;top:5px;width:4px;height:4px;background:#ffe06c;box-shadow:9px 0 #8dffdd,0 8px #8dffdd,9px 8px #ffe06c,0 16px #ffe06c,9px 16px #8dffdd}
+.propSprite.tower:after{left:8px;top:-8px;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:9px solid #c9f8ff}
+.propSprite.dome{width:31px;height:17px;border:2px solid #d7caff;border-radius:50% 50% 4px 4px;background:radial-gradient(circle at 40% 20%,#d7caff,#7155ba 55%,#30205f)}
+.propSprite.dome:before{left:7px;top:4px;width:15px;height:6px;border-radius:50%;background:#152d47;border:1px solid #8eefff;box-shadow:0 0 6px #67e9ff}
+.propSprite.dome:after{left:3px;bottom:-4px;width:24px;height:5px;border-radius:50%;background:#0b1520}
+.propSprite.factory{width:31px;height:19px;border:2px solid #ffc0cf;background:linear-gradient(90deg,#db5770,#84263e 70%);border-radius:2px}
+.propSprite.factory:before{left:3px;top:-13px;width:7px;height:14px;background:#5f3540;border:1px solid #d38b9c;box-shadow:17px 4px 0 #5f3540}
+.propSprite.factory:after{left:7px;top:5px;width:5px;height:5px;background:#ffd66b;box-shadow:10px 0 #ffd66b}
+.propSprite.villa{width:31px;height:18px;border:2px solid #d6ffc7;background:linear-gradient(90deg,#72d99b,#2f8757 70%);border-radius:3px}
+.propSprite.villa:before{left:-3px;top:-10px;width:33px;height:13px;background:#ffd66b;clip-path:polygon(50% 0,100% 100%,0 100%);filter:drop-shadow(0 2px #5e3d10)}
+.propSprite.villa:after{left:5px;bottom:0;width:7px;height:10px;background:#4b2d19;box-shadow:13px -2px 0 #bff7ff}
+.propSprite.spire{width:23px;height:31px;background:linear-gradient(90deg,#ffe681,#cf8c20 62%,#73430d);border:2px solid #fff1ae;clip-path:polygon(34% 18%,44% 18%,50% 0,57% 18%,68% 18%,100% 100%,0 100%)}
+.propSprite.spire:before{left:7px;top:13px;width:5px;height:5px;background:#67e9ff;box-shadow:0 8px #ff9bc0}
+.propSprite.transitHub{width:32px;height:16px;border:2px solid #dff9ff;background:linear-gradient(#dceaf0,#728994);border-radius:10px 10px 3px 3px}
+.propSprite.transitHub:before{left:4px;top:4px;width:7px;height:5px;background:#163a4d;box-shadow:15px 0 #163a4d}
+.propSprite.transitHub:after{left:5px;bottom:-5px;width:6px;height:6px;border-radius:50%;background:#071018;box-shadow:15px 0 #071018}
+.propSprite.utilityPlant{width:27px;height:20px;border:2px solid #baffda;background:linear-gradient(90deg,#55d899,#207354);border-radius:4px}
+.propSprite.utilityPlant:before{left:7px;top:-9px;width:11px;height:11px;border-radius:50%;border:3px solid #8effbd;box-shadow:0 0 8px #71f6a5}
+.propSprite.utilityPlant:after{left:4px;bottom:3px;width:18px;height:4px;background:#d7fff0;box-shadow:0 -7px #1a4d3c}
+.propSign{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);z-index:4;padding:1px 3px;border-radius:3px;background:#061018d9;border:1px solid #ffffff55;color:#fff;font-size:4px;font-weight:1000;white-space:nowrap;letter-spacing:.04em}
+.cell.lvl1 .propSprite{transform:translateX(-50%) scale(.82)}.cell.lvl2 .propSprite{transform:translateX(-50%) scale(.92)}.cell.lvl3 .propSprite{transform:translateX(-50%) scale(1.02)}
+.cell.lvl4 .propSprite{transform:translateX(-50%) scale(1.12);filter:drop-shadow(0 0 7px #ffd66b) drop-shadow(3px 4px 1px #0009)}
+.cell:hover .propSprite{animation:propPop .38s ease}@keyframes propPop{50%{transform:translateX(-50%) translateY(-3px) scale(1.08)}}
+@media(max-width:520px){.propertyScene{inset:12px 2px 2px}.propSprite{transform:translateX(-50%) scale(.68)!important;transform-origin:50% 100%}.propSign{display:none}}
+
+/* GRAPHICS COUNTDOWN — PHASE 14: ANIMATED CONSTRUCTION */
+.buildSiteFx{position:absolute;inset:8px 2px 1px;z-index:25;pointer-events:none;overflow:visible}
+.craneFx{position:absolute;left:13%;bottom:3px;width:3px;height:37px;background:#ffd66b;border:1px solid #6d4a0e;transform-origin:bottom;animation:craneRise .35s ease-out}
+.craneFx:before{content:"";position:absolute;left:-2px;top:0;width:29px;height:3px;background:#ffd66b;border:1px solid #6d4a0e;transform-origin:2px 50%;animation:craneSwing 1.05s ease-in-out infinite}
+.craneFx:after{content:"";position:absolute;left:22px;top:2px;width:1px;height:17px;background:#e7f5f8;box-shadow:0 14px 0 1px #ffb547}
+@keyframes craneRise{from{transform:scaleY(.05)}to{transform:scaleY(1)}}@keyframes craneSwing{50%{transform:rotate(8deg)}}
+.scaffoldFx{position:absolute;left:38%;bottom:2px;width:27px;height:29px;border:2px solid #9cb0b8;background:repeating-linear-gradient(0deg,transparent 0 7px,#80949d 7px 9px),repeating-linear-gradient(90deg,transparent 0 8px,#80949d 8px 10px);animation:scaffoldBuild .48s ease-out}
+@keyframes scaffoldBuild{from{height:2px;opacity:.2}to{height:29px;opacity:1}}
+.riseBuildingFx{position:absolute;left:45%;bottom:3px;width:18px;height:31px;border:2px solid #c5f6ff;background:linear-gradient(90deg,#68e5ff,#207b9b 65%,#0b4057);box-shadow:inset -4px 0 #082f41;transform-origin:bottom;animation:buildingRise .8s cubic-bezier(.2,.8,.2,1) forwards}
+.riseBuildingFx:after{content:"";position:absolute;left:4px;top:5px;width:3px;height:3px;background:#ffe26e;box-shadow:7px 0 #8dffdd,0 7px #8dffdd,7px 7px #ffe26e,0 14px #ffe26e,7px 14px #8dffdd}
+@keyframes buildingRise{0%{transform:scaleY(.05);filter:brightness(2)}65%{transform:scaleY(1.08)}100%{transform:scaleY(1)}}
+.weldSpark{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff5ae;box-shadow:0 0 8px #ffb43b;animation:weldSpark .52s ease-out forwards}
+@keyframes weldSpark{to{transform:translate(var(--sx),var(--sy)) scale(.2);opacity:0}}
+.dustPuff{position:absolute;width:12px;height:9px;border-radius:50%;background:#c9d6d8aa;filter:blur(1px);animation:dustPuff .8s ease-out forwards}
+@keyframes dustPuff{to{transform:translate(var(--dx),-19px) scale(2);opacity:0}}
+.hammerFx{position:absolute;right:10%;top:25%;font-size:16px;transform-origin:80% 80%;animation:hammerFx .28s ease-in-out 4}
+@keyframes hammerFx{50%{transform:rotate(-42deg) translateY(-3px)}}
+.constructBanner{position:absolute;z-index:30;left:50%;top:-4px;transform:translateX(-50%);padding:2px 6px;border:1px solid #ffd66b;border-radius:8px;background:#07131be8;color:#ffe595;font-size:6px;font-weight:1000;letter-spacing:.07em;white-space:nowrap;animation:constructBanner 1.2s ease forwards}
+@keyframes constructBanner{0%{opacity:0;transform:translate(-50%,6px) scale(.7)}20%,75%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-7px)}}
+.cell.constructing{animation:constructionTile 1.15s ease}
+@keyframes constructionTile{30%{filter:brightness(1.45);box-shadow:inset 0 0 18px #ffd66b,0 4px 0 #02090d!important}100%{filter:none}}
+.cell.constructing .propSprite{animation:propertyBuildPulse 1s ease!important}
+@keyframes propertyBuildPulse{0%{opacity:.2;transform:translateX(-50%) scale(.65)}55%{opacity:.65;transform:translateX(-50%) scale(1.13)}100%{opacity:1}}
+@media(max-width:520px){.buildSiteFx{transform:scale(.72);transform-origin:50% 100%}.constructBanner{font-size:5px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 13: DISTINCT DISTRICT WORLDS */
+.districtDecor{position:absolute;inset:8px 1px 1px;z-index:0;overflow:hidden;pointer-events:none;border-radius:3px}
+.districtDecor i{position:absolute;display:block}
+.districtDecor.neon .road{left:4%;right:4%;bottom:2px;height:5px;background:#291843;border-top:1px solid #d26cff;box-shadow:0 0 5px #b957ff}
+.districtDecor.neon .road:after{content:"";position:absolute;left:10%;right:10%;top:2px;border-top:1px dashed #ff8fe0}
+.districtDecor.neon .sign{right:5%;top:7px;width:13px;height:8px;border:1px solid #f08cff;background:#331044;box-shadow:0 0 7px #e66cff}
+.districtDecor.neon .sign:after{content:"N";position:absolute;inset:0;text-align:center;font-size:5px;color:#fff}
+.districtDecor.solar{background:radial-gradient(circle at 75% 20%,#ffd96a35,transparent 35%)}
+.districtDecor.solar .sun{right:5%;top:4px;width:9px;height:9px;border-radius:50%;background:#ffe57a;box-shadow:0 0 10px #ffbd42}
+.districtDecor.solar .panel{left:7%;bottom:3px;width:16px;height:8px;transform:skewX(-18deg);background:repeating-linear-gradient(90deg,#163d69 0 4px,#6dc7e8 4px 5px);border:1px solid #a8ecff}
+.districtDecor.aurora{background:linear-gradient(145deg,#ff7ab218,transparent 45%,#65f4d51b)}
+.districtDecor.aurora .tree{left:5%;bottom:2px;width:3px;height:12px;background:#543424}.districtDecor.aurora .tree:before{content:"";position:absolute;left:-5px;top:-5px;width:13px;height:11px;border-radius:50%;background:#ff8fc3;box-shadow:0 0 6px #ff80c0}
+.districtDecor.aurora .tree.t2{left:auto;right:7%;transform:scale(.75)}
+.districtDecor.orbital .pad{left:8%;bottom:2px;width:20px;height:7px;border:2px solid #72e9ff;border-radius:50%;box-shadow:0 0 7px #4fdcff,inset 0 0 5px #4fdcff}
+.districtDecor.orbital .antenna{right:8%;bottom:3px;width:2px;height:18px;background:#a9eaf6}.districtDecor.orbital .antenna:before{content:"";position:absolute;left:-5px;top:-3px;width:11px;height:5px;border:1px solid #8cecff;border-radius:50%;transform:rotate(-15deg)}
+.districtDecor.eclipse{background:radial-gradient(circle at 50% 35%,#6f72c42b,transparent 50%)}
+.districtDecor.eclipse .crystal{left:7%;bottom:2px;width:10px;height:18px;background:linear-gradient(135deg,#d5d6ff,#625ab0);clip-path:polygon(50% 0,100% 35%,75% 100%,20% 100%,0 35%);filter:drop-shadow(0 0 5px #9d9cff)}
+.districtDecor.eclipse .crystal.c2{left:auto;right:8%;height:12px;width:7px}
+.districtDecor.crown{background:linear-gradient(#7cffb40b,#214c2b22)}
+.districtDecor.crown .hedge{left:3%;right:3%;bottom:2px;height:7px;border-radius:50% 50% 2px 2px;background:#2f9855;box-shadow:0 -3px 0 #52c877}
+.districtDecor.crown .fountain{left:50%;bottom:3px;width:13px;height:6px;transform:translateX(-50%);border-radius:50%;background:#66dfff;border:1px solid #c9f8ff}.districtDecor.crown .fountain:before{content:"";position:absolute;left:5px;bottom:3px;width:3px;height:11px;border-radius:50%;background:#a8f2ff;box-shadow:0 0 5px #65e7ff}
+.districtDecor.transit .rail{left:3%;right:3%;bottom:3px;height:7px;background:repeating-linear-gradient(90deg,#73838b 0 3px,#18232a 3px 7px);border-top:2px solid #c7d5da;border-bottom:2px solid #c7d5da}
+.districtDecor.utility .pipe{left:5%;right:5%;bottom:4px;height:5px;background:#3b8f72;border:1px solid #9af3cd;border-radius:4px}.districtDecor.utility .pipe:after{content:"";position:absolute;right:3px;top:-6px;width:7px;height:7px;border:2px solid #79eeb9;border-radius:50%}
+.districtDecor.special .starscape{inset:0;background:radial-gradient(circle at 20% 25%,#fff 0 1px,transparent 2px),radial-gradient(circle at 70% 45%,#7feaff 0 1px,transparent 2px),radial-gradient(circle at 45% 75%,#ffe17d 0 1px,transparent 2px)}
+.cell[data-theme="neon"]{background:linear-gradient(145deg,#38204c,#1c1531 55%,#100a1d)!important}
+.cell[data-theme="solar"]{background:linear-gradient(145deg,#5a451d,#2c2515 55%,#17120a)!important}
+.cell[data-theme="aurora"]{background:linear-gradient(145deg,#51243d,#2b1727 55%,#170b13)!important}
+.cell[data-theme="orbital"]{background:linear-gradient(145deg,#17495d,#102d3a 55%,#071821)!important}
+.cell[data-theme="eclipse"]{background:linear-gradient(145deg,#292d59,#171a37 55%,#0b0d1d)!important}
+.cell[data-theme="crown"]{background:linear-gradient(145deg,#17452c,#102b20 55%,#07170f)!important}
+.cell[data-theme="transit"]{background:linear-gradient(145deg,#465760,#25343b 55%,#111b20)!important}
+.cell[data-theme="utility"]{background:linear-gradient(145deg,#245548,#15372f 55%,#0a1d19)!important}
+@media(max-width:520px){.districtDecor{opacity:.8}.districtDecor .sign,.districtDecor .antenna{transform:scale(.7);transform-origin:bottom right}}
+
+/* GRAPHICS COUNTDOWN — PHASE 12: LANDMARK OVERHAUL */
+.landmarkMega{position:absolute;z-index:9;left:50%;bottom:3px;width:36px;height:39px;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(4px 6px 2px #000a);animation:megaFloat 2.2s ease-in-out infinite}
+@keyframes megaFloat{50%{transform:translateX(-50%) translateY(-2px)}}
+.landmarkMega:before,.landmarkMega:after{content:"";position:absolute}
+.landmarkMega.neon{background:linear-gradient(90deg,#ff7fe5,#7e36be 60%,#35124e);border:2px solid #ffc0f0;clip-path:polygon(25% 18%,42% 18%,50% 0,58% 18%,75% 18%,100% 100%,0 100%);box-shadow:0 0 13px #ef62e1}
+.landmarkMega.neon:before{left:9px;top:14px;width:15px;height:3px;background:#6ff2ff;box-shadow:0 7px #ffe06c,0 14px #6ff2ff}
+.landmarkMega.solar{border:2px solid #fff1a4;border-radius:50% 50% 5px 5px;background:radial-gradient(circle at 50% 25%,#fff3a3,#e8a92d 42%,#8b520d);box-shadow:0 0 15px #ffd04f}
+.landmarkMega.solar:before{left:12px;top:-8px;width:10px;height:10px;border-radius:50%;background:#fff4a7;box-shadow:0 0 12px #ffd23f}
+.landmarkMega.aurora{background:linear-gradient(90deg,#ff9ac7,#a83c77 60%,#57203e);border:2px solid #ffd0e3;border-radius:18px 18px 5px 5px;box-shadow:0 0 14px #ff83bd}
+.landmarkMega.aurora:before{left:4px;right:4px;top:8px;height:14px;border-radius:50%;border:3px solid #8effd3;box-shadow:0 0 8px #72f0c1}
+.landmarkMega.orbital{background:linear-gradient(90deg,#8df0ff,#267e9d 60%,#0c4257);border:2px solid #c9f9ff;border-radius:4px;box-shadow:0 0 15px #67e9ff}
+.landmarkMega.orbital:before{left:7px;top:-11px;width:20px;height:20px;border:2px solid #8defff;border-radius:50%;animation:landOrbit 2s linear infinite}
+.landmarkMega.orbital:after{left:15px;top:-16px;width:5px;height:12px;background:#dffaff;border-radius:4px}
+@keyframes landOrbit{to{transform:rotate(360deg)}}
+.landmarkMega.eclipse{background:linear-gradient(135deg,#e2e3ff,#6b64bc 48%,#28245d);clip-path:polygon(50% 0,100% 30%,78% 100%,22% 100%,0 30%);border:2px solid #d9d9ff;filter:drop-shadow(0 0 11px #9997ff) drop-shadow(4px 6px 2px #000a)}
+.landmarkMega.eclipse:before{left:12px;top:13px;width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 0 12px #c8c7ff;animation:eclipseCore 1.3s ease-in-out infinite}@keyframes eclipseCore{50%{transform:scale(1.4);opacity:.55}}
+.landmarkMega.crown{background:linear-gradient(90deg,#7cf1a7,#2b9557 60%,#104a2c);border:2px solid #c7ffda;border-radius:4px;box-shadow:0 0 13px #71f6a5}
+.landmarkMega.crown:before{left:2px;top:-13px;width:30px;height:17px;background:#ffd66b;clip-path:polygon(0 100%,10% 10%,32% 55%,50% 0,68% 55%,90% 10%,100% 100%);filter:drop-shadow(0 0 5px #ffd66b)}
+.landmarkMega.transit{width:42px;height:25px;bottom:4px;border:2px solid #e4f7ff;border-radius:14px 14px 4px 4px;background:linear-gradient(#dff5ff,#78929d);box-shadow:0 0 11px #9cecff}
+.landmarkMega.transit:before{left:5px;top:5px;width:8px;height:7px;background:#163b4e;box-shadow:12px 0 #163b4e,24px 0 #163b4e}
+.landmarkMega.utility{border:2px solid #baffd7;border-radius:8px;background:linear-gradient(90deg,#69e3a4,#227957);box-shadow:0 0 14px #71f6a5}
+.landmarkMega.utility:before{left:8px;top:6px;width:16px;height:16px;border-radius:50%;border:4px solid #d1ffe3;box-shadow:0 0 9px #7affb3;animation:utilityRotor 1.5s linear infinite}@keyframes utilityRotor{to{transform:rotate(360deg)}}
+.landmarkBeacon{position:absolute;z-index:8;left:50%;bottom:35px;width:3px;height:30px;transform:translateX(-50%);background:linear-gradient(to top,#ffd66b99,transparent);filter:blur(1px);animation:beaconSweep 1.8s ease-in-out infinite}@keyframes beaconSweep{50%{transform:translateX(-50%) rotate(18deg);opacity:.45}}
+.landmarkLabel{position:absolute;z-index:14;left:50%;bottom:0;transform:translateX(-50%);padding:1px 4px;border:1px solid #ffe99c;border-radius:5px;background:#07131bea;color:#ffe47f;font-size:5px;font-weight:1000;white-space:nowrap;box-shadow:0 0 6px #ffd66b55}
+.cell.lvl4 .propSprite,.cell.lvl4 .toonCity{opacity:.18}
+.cell.lvl4{overflow:visible!important;z-index:3}
+@media(max-width:520px){.landmarkMega{transform:translateX(-50%) scale(.72);transform-origin:50% 100%}.landmarkLabel{font-size:4px}.landmarkBeacon{height:20px;bottom:26px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 11: STREET LIFE */
+.streetLife{position:absolute;inset:10px 1px 1px;z-index:7;pointer-events:none;overflow:hidden;border-radius:3px}
+.streetCar{position:absolute;bottom:2px;left:-15px;width:13px;height:6px;border-radius:5px 6px 2px 2px;background:#ffd45f;border:1px solid #fff0a2;box-shadow:0 0 5px #ffd45f;animation:streetDrive 5.2s linear infinite}
+.streetCar:before{content:"";position:absolute;left:2px;top:-3px;width:7px;height:4px;border-radius:4px 4px 0 0;background:#67dff4}
+.streetCar:after{content:"";position:absolute;left:1px;bottom:-3px;width:4px;height:4px;border-radius:50%;background:#071018;box-shadow:8px 0 #071018}
+.streetCar.c2{bottom:8px;background:#ff7c91;animation-duration:7s;animation-delay:-3s;transform:scale(.72)}
+@keyframes streetDrive{to{left:105%}}
+.streetPed{position:absolute;bottom:3px;left:12%;width:5px;height:10px;border-radius:50% 50% 2px 2px;background:#9cf3ff;animation:streetPedWalk 3.6s ease-in-out infinite}
+.streetPed:before{content:"";position:absolute;left:1px;top:-5px;width:4px;height:5px;border-radius:50%;background:#ffd6a0}
+.streetPed:after{content:"";position:absolute;left:0;bottom:-4px;width:2px;height:5px;background:#b8f6ff;box-shadow:4px 0 #b8f6ff}
+.streetPed.p2{left:78%;background:#ff91b5;animation-delay:-1.8s}
+@keyframes streetPedWalk{0%,100%{transform:translateX(0)}50%{transform:translateX(9px) translateY(-1px)}}
+.deliveryBot{position:absolute;right:5%;bottom:2px;width:10px;height:8px;border-radius:3px;background:#d9eff4;border:1px solid #6fdcf3;animation:deliveryBot 2.8s ease-in-out infinite}
+.deliveryBot:before{content:"";position:absolute;left:2px;top:-5px;width:6px;height:5px;border-radius:50%;background:#283e48;border:1px solid #8deaff}
+.deliveryBot:after{content:"";position:absolute;left:1px;bottom:-3px;width:3px;height:3px;border-radius:50%;background:#071018;box-shadow:6px 0 #071018}
+@keyframes deliveryBot{50%{transform:translateX(-10px) translateY(-2px)}}
+.streetTrain{position:absolute;left:-35px;bottom:4px;width:31px;height:10px;border-radius:7px 7px 3px 3px;background:linear-gradient(#effbff,#77939e);border:1px solid #dff8ff;box-shadow:0 0 7px #77e8ff;animation:streetTrain 4.2s linear infinite}
+.streetTrain:before{content:"";position:absolute;left:4px;top:2px;width:5px;height:4px;background:#15394a;box-shadow:8px 0 #15394a,16px 0 #15394a}
+@keyframes streetTrain{to{left:110%}}
+.courierDrone{position:absolute;left:15%;top:8px;width:12px;height:5px;border-radius:6px;background:#c7f7ff;border:1px solid #61dcf4;box-shadow:0 0 5px #67e9ff;animation:courierFly 4s ease-in-out infinite}
+.courierDrone:before,.courierDrone:after{content:"";position:absolute;top:-2px;width:6px;height:1px;background:#ffd66b}.courierDrone:before{left:-5px}.courierDrone:after{right:-5px}
+@keyframes courierFly{50%{transform:translate(22px,-5px) rotate(5deg)}}
+.streetLife.busy .streetCar{animation-duration:3.4s}.streetLife.busy .streetPed{animation-duration:2.4s}.streetLife.busy .courierDrone{animation-duration:2.8s}
+.cell.lvl4 .streetLife{filter:brightness(1.25);opacity:1}
+@media(max-width:520px){.streetLife{opacity:.8}.streetCar,.streetPed,.deliveryBot,.courierDrone{transform:scale(.7);transform-origin:bottom left}.streetTrain{transform:scale(.72);transform-origin:bottom left}}
+
+/* GRAPHICS COUNTDOWN — PHASE 10: MULTI-LAYER SKY */
+.skyDepth{position:absolute;inset:14.5%;z-index:2;pointer-events:none;overflow:hidden;border-radius:14px;perspective:700px}
+.skyHaze{position:absolute;inset:0;background:linear-gradient(180deg,#7ee9ff10,transparent 35%,#355eff08 70%,transparent);animation:hazeDrift 9s ease-in-out infinite}
+@keyframes hazeDrift{50%{transform:translateX(3%) scale(1.04);opacity:.55}}
+.starLayerFar,.starLayerNear{position:absolute;inset:0}
+.starLayerFar{background-image:radial-gradient(#fff 0 1px,transparent 1.4px),radial-gradient(#75dfff 0 1px,transparent 1.5px);background-size:61px 53px,83px 71px;background-position:4px 9px,27px 31px;opacity:.24;animation:starsFar 28s linear infinite}
+.starLayerNear{background-image:radial-gradient(#fff3b0 0 1px,transparent 1.8px),radial-gradient(#fff 0 1px,transparent 1.7px);background-size:107px 89px,139px 117px;opacity:.35;animation:starsNear 18s linear infinite}
+@keyframes starsFar{to{background-position:65px 9px,110px 31px}}@keyframes starsNear{to{background-position:107px 0,139px 0}}
+.orbitLane{position:absolute;left:-10%;width:120%;height:22%;border:1px solid #67e9ff1f;border-radius:50%;transform:rotate(-8deg);box-shadow:inset 0 0 10px #67e9ff0d}
+.orbitLane.l1{top:20%}.orbitLane.l2{top:55%;transform:rotate(11deg);border-color:#ffd66b1b}
+.skyShip{position:absolute;left:-55px;width:38px;height:12px;border-radius:65% 75% 40% 45%;background:linear-gradient(90deg,#eefcff,#59dff7 45%,#145d78 78%);border:1px solid #bff7ff;box-shadow:0 0 9px #67e9ff;animation:skyShip 12s linear infinite}
+.skyShip:before{content:"";position:absolute;left:11px;top:-5px;width:13px;height:6px;border-radius:50% 50% 0 0;background:#19465b;border:1px solid #7be9ff}
+.skyShip:after{content:"";position:absolute;right:-11px;top:4px;border-left:13px solid #ff9d47;border-top:3px solid transparent;border-bottom:3px solid transparent;filter:drop-shadow(0 0 5px #ffb64d)}
+.skyShip.s1{top:23%;animation-duration:11s}.skyShip.s2{top:62%;animation-duration:17s;animation-delay:-8s;transform:scale(.62);opacity:.65}.skyShip.s3{top:39%;animation-duration:23s;animation-delay:-15s;transform:scale(.42);opacity:.42}
+@keyframes skyShip{to{left:calc(100% + 60px)}}
+.skyShipReverse{position:absolute;right:-48px;top:72%;width:30px;height:9px;border-radius:60%;background:linear-gradient(90deg,#6f54c5,#d4c8ff);border:1px solid #e7e0ff;box-shadow:0 0 7px #a992ff;animation:skyReverse 15s linear infinite}
+.skyShipReverse:after{content:"";position:absolute;left:-9px;top:3px;border-right:11px solid #ff6577;border-top:2px solid transparent;border-bottom:2px solid transparent}
+@keyframes skyReverse{to{right:calc(100% + 50px)}}
+.satellite{position:absolute;left:72%;top:13%;width:11px;height:11px;border-radius:50%;background:#dbe9ee;border:1px solid #fff;box-shadow:0 0 6px #fff;animation:satOrbit 13s ease-in-out infinite}
+.satellite:before,.satellite:after{content:"";position:absolute;top:2px;width:13px;height:7px;background:repeating-linear-gradient(90deg,#244d78 0 3px,#69b6e4 3px 5px);border:1px solid #8dd5ff}.satellite:before{right:10px}.satellite:after{left:10px}
+@keyframes satOrbit{50%{transform:translate(-80px,35px) rotate(20deg) scale(.8);opacity:.65}}
+.orbitalStation{position:absolute;right:8%;top:42%;width:30px;height:30px;border:3px solid #9feeff;border-radius:50%;box-shadow:0 0 12px #67e9ff;animation:stationSpin 8s linear infinite}
+.orbitalStation:before{content:"";position:absolute;left:11px;top:-9px;width:4px;height:42px;background:#b8e7ef;border:1px solid #fff}
+.orbitalStation:after{content:"";position:absolute;left:-9px;top:11px;width:42px;height:4px;background:#b8e7ef;border:1px solid #fff}
+@keyframes stationSpin{to{transform:rotate(360deg)}}
+.atmoBand{position:absolute;left:-10%;right:-10%;bottom:-14%;height:35%;border-radius:50%;border-top:8px solid #58dfff12;box-shadow:0 -12px 30px #67e9ff0b;animation:atmoGlow 4s ease-in-out infinite}
+@keyframes atmoGlow{50%{opacity:.45;transform:scaleX(1.05)}}
+@media(max-width:520px){.skyDepth{inset:15.5%}.skyShip{transform:scale(.65)}.skyShip.s2{transform:scale(.45)}.skyShip.s3{display:none}.orbitalStation{transform:scale(.65);transform-origin:center}.satellite{transform:scale(.7)}}
+
+/* GRAPHICS COUNTDOWN — PHASE 9: DYNAMIC LIGHTING */
+.cell{--lightGlow:#67e9ff}
+.cell[data-theme="neon"]{--lightGlow:#ef74e4}.cell[data-theme="solar"]{--lightGlow:#ffd45f}.cell[data-theme="aurora"]{--lightGlow:#ff86bd}.cell[data-theme="orbital"]{--lightGlow:#67e9ff}.cell[data-theme="eclipse"]{--lightGlow:#a9a4ff}.cell[data-theme="crown"]{--lightGlow:#71f6a5}
+.cellLight{position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 12px color-mix(in srgb,var(--lightGlow) 18%,transparent);opacity:.55;animation:cellLightBreath 3.4s ease-in-out infinite}
+@keyframes cellLightBreath{50%{opacity:.9;filter:brightness(1.25)}}
+.streetLamp{position:absolute;z-index:8;bottom:3px;width:2px;height:15px;background:#899da5;border-radius:2px}.streetLamp:before{content:"";position:absolute;left:-3px;top:-2px;width:8px;height:4px;border-radius:50%;background:#fff3a8;box-shadow:0 0 8px #ffe36d,0 0 15px #ffd85c}.streetLamp:after{content:"";position:absolute;left:-8px;top:1px;width:18px;height:18px;background:radial-gradient(ellipse,#ffe77a25,transparent 68%);transform:rotate(12deg)}
+.streetLamp.l1{left:6%}.streetLamp.l2{right:6%}
+.windowGlow{position:absolute;z-index:5;left:50%;top:47%;width:4px;height:4px;background:#ffe47c;box-shadow:-9px 0 #74f0ff,9px 0 #ffe47c,-9px 8px #ffe47c,0 8px #74f0ff,9px 8px #ffe47c;animation:windowFlicker 2.7s steps(2) infinite}
+@keyframes windowFlicker{33%{filter:brightness(.55)}66%{filter:brightness(1.7)}}
+.headLight{position:absolute;z-index:9;bottom:4px;width:3px;height:3px;border-radius:50%;background:#fff7c7;box-shadow:0 0 7px #fff1a0}.headLight:after{content:"";position:absolute;left:2px;top:-4px;width:18px;height:10px;background:linear-gradient(90deg,#fff2a22c,transparent);clip-path:polygon(0 40%,100% 0,100% 100%,0 60%)}
+.neonEdge{position:absolute;z-index:6;left:8%;right:8%;bottom:2px;height:2px;background:var(--lightGlow);box-shadow:0 0 7px var(--lightGlow);opacity:.65;animation:neonEdge 2s ease-in-out infinite}@keyframes neonEdge{50%{opacity:.2}}
+.cell.lvl4 .cellLight{opacity:1;box-shadow:inset 0 0 18px color-mix(in srgb,var(--lightGlow) 30%,transparent),0 0 9px color-mix(in srgb,var(--lightGlow) 22%,transparent)}
+.landmarkMega{--lmGlow:var(--lightGlow)}
+.landmarkMega:after{filter:drop-shadow(0 0 4px var(--lmGlow))}
+.skyDepth{box-shadow:inset 0 -25px 35px #67e9ff08}
+.center:after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at 50% 60%,#67e9ff0e,transparent 52%);animation:centerLight 4s ease-in-out infinite}@keyframes centerLight{50%{opacity:.35}}
+.lightSweep{position:absolute;z-index:3;left:-25%;top:0;width:22%;height:100%;background:linear-gradient(100deg,transparent,#ffffff0d,transparent);transform:skewX(-18deg);animation:lightSweep 9s linear infinite;pointer-events:none}@keyframes lightSweep{to{left:120%}}
+@media(max-width:520px){.streetLamp{height:10px;transform:scale(.72);transform-origin:bottom}.windowGlow{transform:scale(.65)}.cellLight{opacity:.42}}
+
+/* GRAPHICS COUNTDOWN — PHASE 8: TRUE DAY / NIGHT WORLD */
+.board{--daymix:0}
+.board.worldDay{
+ filter:brightness(1.06) saturate(.96);
+ box-shadow:0 28px 65px #000b,0 0 0 5px #07151d,0 0 45px #8beaff25,inset 0 0 55px #0006!important;
+}
+.board.worldDusk{filter:brightness(.9) saturate(1.12)}
+.board.worldNight{
+ filter:brightness(.76) saturate(1.3) contrast(1.06);
+ box-shadow:0 28px 70px #000e,0 0 0 5px #050b10,0 0 55px #476fff28,inset 0 0 70px #000b!important;
+}
+.dayNightSky{position:absolute;inset:14.5%;z-index:0;overflow:hidden;border-radius:14px;pointer-events:none;transition:background 1.5s ease}
+.worldDay .dayNightSky{background:linear-gradient(#70c9e8 0%,#b8eaf2 43%,#efc979 76%,#354e67 100%)}
+.worldDusk .dayNightSky{background:linear-gradient(#714d83 0%,#c76d72 38%,#f0a35e 65%,#263447 100%)}
+.worldNight .dayNightSky{background:linear-gradient(#081427 0%,#10244a 48%,#171c38 72%,#050912 100%)}
+.sunCycle,.moonCycle{position:absolute;width:30px;height:30px;border-radius:50%;transition:all 1.3s cubic-bezier(.2,.8,.2,1)}
+.sunCycle{left:12%;top:14%;background:radial-gradient(circle,#fffbd0 0 25%,#ffd75c 48%,#ff9d42 70%);box-shadow:0 0 25px #ffd45f}
+.moonCycle{right:13%;top:14%;background:radial-gradient(circle at 35% 30%,#fff,#c7e5f0 52%,#7797ad 70%);box-shadow:0 0 18px #c6eaff;opacity:0;transform:translateY(35px)}
+.worldDusk .sunCycle{left:45%;top:53%;transform:scale(.78);filter:hue-rotate(-18deg)}
+.worldDusk .moonCycle{opacity:.35;transform:translateY(14px)}
+.worldNight .sunCycle{left:70%;top:105%;opacity:0;transform:scale(.6)}
+.worldNight .moonCycle{opacity:1;transform:translateY(0)}
+.twilightBand{position:absolute;left:-10%;right:-10%;bottom:13%;height:18%;border-radius:50%;background:radial-gradient(ellipse,#ffb85b33,transparent 70%);transition:opacity 1s}.worldNight .twilightBand{opacity:0}
+.nightStars{position:absolute;inset:0;opacity:0;transition:opacity 1.4s;background-image:radial-gradient(#fff 0 1px,transparent 1.5px),radial-gradient(#7feaff 0 1px,transparent 1.5px);background-size:53px 47px,79px 67px;background-position:7px 11px,31px 25px}.worldDusk .nightStars{opacity:.32}.worldNight .nightStars{opacity:.85}
+.worldDay .starLayerFar,.worldDay .starLayerNear{opacity:.04!important}.worldDusk .starLayerFar,.worldDusk .starLayerNear{opacity:.22!important}.worldNight .starLayerFar{opacity:.48!important}.worldNight .starLayerNear{opacity:.68!important}
+.worldDay .streetLamp:before,.worldDay .windowGlow,.worldDay .neonEdge{opacity:.18;box-shadow:none!important}
+.worldDusk .streetLamp:before,.worldDusk .windowGlow,.worldDusk .neonEdge{opacity:.65}
+.worldNight .streetLamp:before,.worldNight .windowGlow,.worldNight .neonEdge{opacity:1;filter:brightness(1.45)}
+.worldNight .cellLight{opacity:1;animation-duration:2.2s}
+.worldNight .landmarkMega{filter:drop-shadow(0 0 11px var(--lightGlow)) drop-shadow(4px 6px 2px #000c)}
+.worldNight .landmarkBeacon{height:43px;opacity:1;filter:blur(1px) brightness(1.5)}
+.worldNight .headLight{filter:brightness(1.8);box-shadow:0 0 11px #fff1a0}
+.worldDay .headLight{opacity:.18}
+.worldNight .streetCar{box-shadow:0 0 7px #ffd45f}.worldNight .streetTrain{box-shadow:0 0 11px #77e8ff}
+.worldNight .courierDrone{box-shadow:0 0 9px #67e9ff}
+.worldNight .propSprite{filter:drop-shadow(3px 5px 2px #000c)}
+.worldDay .cell{filter:brightness(1.05)}.worldNight .cell{border-color:#36576a!important}
+.cycleBadge{position:absolute;z-index:45;right:8px;top:8px;padding:4px 7px;border:1px solid #7ddff1;border-radius:999px;background:#07131bd9;color:#e9fbff;font-size:7px;font-weight:1000;letter-spacing:.08em;box-shadow:0 0 9px #67e9ff33;pointer-events:none}
+.cycleBadge:before{content:"☀ DAY";}.worldDusk .cycleBadge:before{content:"◐ DUSK"}.worldNight .cycleBadge:before{content:"☾ NIGHT"}
+.worldDusk .cycleBadge{border-color:#ffb064;color:#ffd7a1}.worldNight .cycleBadge{border-color:#899dff;color:#cfd7ff;box-shadow:0 0 10px #7a8fff55}
+@media(max-width:520px){.dayNightSky{inset:15.5%}.sunCycle,.moonCycle{width:19px;height:19px}.cycleBadge{font-size:5px;padding:2px 5px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 7: 3D CARTOON DICE */
+.diceStage{perspective:700px!important;overflow:visible!important}
+.die{
+ position:relative!important;
+ transform-style:preserve-3d;
+ border:3px solid #e7f8ff!important;
+ border-radius:13px!important;
+ background:
+ radial-gradient(circle at 30% 22%,#fff 0 8%,transparent 9%),
+ linear-gradient(145deg,#f8ffff 0%,#cdebf4 54%,#8eb7c7 100%)!important;
+ color:#07131b!important;
+ text-shadow:none!important;
+ box-shadow:
+ inset 5px 5px 8px #ffffff,
+ inset -7px -8px 11px #5e8798aa,
+ 0 9px 0 #315262,
+ 0 13px 16px #0009,
+ 0 0 12px #67e9ff33!important;
+ transform-origin:50% 65%;
+}
+.die:before{
+ content:"";position:absolute;left:7%;right:7%;top:7%;height:25%;
+ border-radius:10px;background:linear-gradient(#ffffffb8,transparent);
+ pointer-events:none
+}
+.die:after{
+ content:"";position:absolute;left:13%;right:13%;bottom:-10px;height:9px;
+ border-radius:50%;background:#0008;filter:blur(4px);
+ transform:translateZ(-20px) scaleX(1.05);pointer-events:none
+}
+.die.rolling{
+ animation:diceTumble3d .62s cubic-bezier(.2,.8,.25,1) infinite!important;
+ filter:none!important
+}
+.die.rolling:nth-child(2){animation-direction:reverse!important;animation-duration:.55s!important}
+@keyframes diceTumble3d{
+ 0%{transform:translateY(0) rotateX(0) rotateY(0) rotateZ(0) scale(1)}
+ 24%{transform:translateY(-25px) rotateX(95deg) rotateY(70deg) rotateZ(32deg) scale(1.08)}
+ 48%{transform:translateY(-8px) rotateX(190deg) rotateY(145deg) rotateZ(88deg) scale(.96)}
+ 72%{transform:translateY(-20px) rotateX(285deg) rotateY(220deg) rotateZ(145deg) scale(1.04)}
+ 100%{transform:translateY(0) rotateX(360deg) rotateY(360deg) rotateZ(180deg) scale(1)}
+}
+.die.diceLand{animation:diceLand3d .48s cubic-bezier(.15,.8,.25,1)!important}
+@keyframes diceLand3d{
+ 0%{transform:translateY(-30px) rotateX(110deg) rotateY(70deg) scale(1.13)}
+ 45%{transform:translateY(5px) rotateX(18deg) rotateY(-12deg) scale(1.18,.78)}
+ 68%{transform:translateY(-8px) rotateX(-8deg) rotateY(7deg) scale(.96,1.08)}
+ 100%{transform:none}
+}
+.die.doublesDie{
+ border-color:#ffe47e!important;
+ box-shadow:inset 5px 5px 8px #fff,inset -7px -8px 11px #8b651faa,0 9px 0 #735116,0 13px 18px #0009,0 0 20px #ffd75f!important;
+ animation:doublesDiePulse .55s ease-in-out 3!important
+}
+@keyframes doublesDiePulse{50%{transform:translateY(-9px) rotate(-5deg) scale(1.14);filter:brightness(1.25)}}
+.diceImpact{
+ position:fixed;z-index:170;width:18px;height:7px;border:3px solid #d9f8ff;border-radius:50%;
+ pointer-events:none;transform:translate(-50%,-50%);
+ animation:diceImpact .52s ease-out forwards;box-shadow:0 0 12px #67e9ff
+}
+@keyframes diceImpact{to{width:110px;height:34px;opacity:0;border-width:1px}}
+.diceStar{
+ position:fixed;z-index:171;pointer-events:none;font-size:13px;
+ animation:diceStar .65s ease-out forwards;text-shadow:0 0 7px #ffd66b
+}
+@keyframes diceStar{to{transform:translate(var(--dx),var(--dy)) rotate(180deg) scale(.3);opacity:0}}
+.doublesBurst{
+ position:fixed;z-index:176;left:50%;top:31%;transform:translate(-50%,-50%) scale(.4);
+ padding:8px 15px;border:3px solid #fff0a1;border-radius:14px;
+ background:linear-gradient(#7b5514,#2b1c08);color:#fff0a1;
+ font-size:18px;font-weight:1000;letter-spacing:.09em;
+ box-shadow:0 7px 0 #120b03,0 0 30px #ffd75f;
+ pointer-events:none;animation:doublesBurst .95s cubic-bezier(.2,.8,.2,1) forwards
+}
+@keyframes doublesBurst{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-9deg)}
+ 22%,68%{opacity:1;transform:translate(-50%,-50%) scale(1.08) rotate(2deg)}
+ 100%{opacity:0;transform:translate(-50%,-72%) scale(.9)}
+}
+.diceSpeedLine{
+ position:fixed;z-index:169;width:42px;height:2px;pointer-events:none;
+ background:linear-gradient(90deg,#fff,#67e9ff,transparent);
+ animation:diceSpeed .38s ease-out forwards
+}
+@keyframes diceSpeed{to{transform:translateX(-35px) scaleX(.2);opacity:0}}
+@media(max-width:520px){
+ .die{border-width:2px!important;border-radius:9px!important;box-shadow:inset 3px 3px 5px #fff,inset -4px -5px 7px #5e879899,0 5px 0 #315262,0 8px 10px #0008!important}
+ .doublesBurst{font-size:12px;padding:6px 10px}
+}
+
+/* GRAPHICS COUNTDOWN — PHASE 6: CREDIT FX */
+.creditCoin{position:fixed;z-index:178;width:15px;height:15px;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 35% 30%,#fff7b8 0 14%,#ffd45d 15% 58%,#9f6411 59%);border:2px solid #fff0a0;box-shadow:0 0 9px #ffd45f,0 3px 0 #67400b;color:#70440c;font-size:7px;font-weight:1000;display:grid;place-items:center;animation:creditFly .85s cubic-bezier(.2,.75,.25,1) forwards}.creditCoin:after{content:"¢"}@keyframes creditFly{0%{transform:translate(0,0) rotate(0) scale(.5);opacity:0}15%{opacity:1}65%{transform:translate(var(--mx),var(--my)) rotate(420deg) scale(1.05)}100%{transform:translate(var(--tx),var(--ty)) rotate(720deg) scale(.3);opacity:0}}
+.moneyPop{position:fixed;z-index:179;pointer-events:none;font-size:16px;font-weight:1000;text-shadow:0 3px #061018,0 0 8px currentColor;animation:moneyPop .9s ease forwards}.moneyPop.gain{color:#83f5ac}.moneyPop.loss{color:#ff7287}@keyframes moneyPop{0%{opacity:0;transform:translate(-50%,7px) scale(.5)}25%,70%{opacity:1;transform:translate(-50%,-8px) scale(1.08)}100%{opacity:0;transform:translate(-50%,-28px) scale(.75)}}
+.cashStackFx{position:fixed;z-index:177;width:26px;height:13px;border-radius:3px;background:linear-gradient(#a4f5b9,#39a960);border:2px solid #d8ffe2;box-shadow:0 4px 0 #176533,0 0 10px #71f6a5;pointer-events:none;animation:stackPop .85s ease forwards}.cashStackFx:after{content:"¢¢";position:absolute;inset:0;display:grid;place-items:center;font-size:6px;font-weight:1000;color:#155c30}@keyframes stackPop{0%{opacity:0;transform:scale(.3)}30%,70%{opacity:1;transform:translateY(-10px) scale(1.08)}100%{opacity:0;transform:translateY(-30px) scale(.7)}}
+.moneyBurst{position:fixed;z-index:176;width:15px;height:15px;border:3px solid #ffd66b;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 15px #ffd66b;animation:moneyBurst .65s ease-out forwards}@keyframes moneyBurst{to{width:100px;height:100px;opacity:0;border-width:1px}}
+.bankruptShard{position:fixed;z-index:181;width:10px;height:7px;background:#ff647a;border:1px solid #ffd1d8;pointer-events:none;animation:bankShard 1.05s ease-out forwards}@keyframes bankShard{to{transform:translate(var(--x),var(--y)) rotate(540deg) scale(.2);opacity:0}}
+.bankruptStamp{position:fixed;z-index:184;left:50%;top:38%;padding:10px 16px;border:5px solid #ff667b;border-radius:9px;color:#ff667b;background:#18070ce8;font-size:20px;font-weight:1000;letter-spacing:.1em;box-shadow:0 0 25px #ff667b66;pointer-events:none;animation:bankStamp .95s ease forwards}@keyframes bankStamp{0%{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(.2)}22%,72%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.8)}}
+@media(max-width:520px){.creditCoin{width:10px;height:10px}.moneyPop{font-size:11px}.bankruptStamp{font-size:13px;border-width:3px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 5: CINEMATIC EVENT CARDS */
+.eventOverlay{perspective:1100px!important;background:radial-gradient(circle at 50% 45%,#153a4db8,#02070bea 72%)!important}
+.eventCard{
+ transform-style:preserve-3d;
+ border:3px solid #74eaff!important;border-radius:22px!important;
+ background:linear-gradient(155deg,#16384a,#091922 62%,#061017)!important;
+ box-shadow:0 30px 90px #000e,0 0 35px #67e9ff45,inset 0 1px #ffffff26!important;
+ overflow:hidden;animation:eventCardEntrance .72s cubic-bezier(.16,.85,.2,1)!important
+}
+@keyframes eventCardEntrance{0%{opacity:0;transform:rotateY(-88deg) rotateX(14deg) scale(.58)}65%{opacity:1;transform:rotateY(8deg) rotateX(-2deg) scale(1.04)}100%{transform:none}}
+.eventCard:before{content:"";position:absolute;inset:7px;border:1px solid #67e9ff66;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 17px #67e9ff15}
+.eventCard:after{content:"";position:absolute;left:-50%;top:-25%;width:35%;height:150%;background:linear-gradient(90deg,transparent,#ffffff3d,transparent);transform:rotate(15deg);animation:eventHoloSweep 2.3s linear infinite;pointer-events:none}
+@keyframes eventHoloSweep{to{left:130%}}
+.eventIcon{
+ position:relative!important;width:82px!important;height:82px!important;margin:5px auto 12px!important;
+ display:grid!important;place-items:center!important;border-radius:50%!important;
+ background:radial-gradient(circle,#1c536b,#0a2634 62%,#06131b)!important;
+ border:3px solid #83edff!important;font-size:45px!important;
+ box-shadow:0 0 22px #67e9ff,inset 0 0 22px #67e9ff33!important;
+ animation:eventIconFloat 1.5s ease-in-out infinite!important
+}
+@keyframes eventIconFloat{50%{transform:translateY(-7px) rotate(3deg);filter:brightness(1.25)}}
+.eventIcon:before,.eventIcon:after{content:"";position:absolute;inset:-11px;border:2px dashed #67e9ff88;border-radius:50%;animation:eventOrbitRing 5s linear infinite}.eventIcon:after{inset:-20px;border-style:dotted;animation-direction:reverse;animation-duration:8s}
+@keyframes eventOrbitRing{to{transform:rotate(360deg)}}
+.eventCard h2,.eventTitle{color:#fff0aa!important;text-shadow:0 3px #51350c,0 0 10px #ffd66b55!important;letter-spacing:.06em!important}
+.eventCard p{line-height:1.45!important;color:#d9f4fa!important}
+.eventTypeBadge{display:inline-block;margin:0 auto 8px;padding:3px 9px;border-radius:999px;border:1px solid #67e9ff;background:#0a2532;color:#a9f3ff;font-size:8px;font-weight:1000;letter-spacing:.12em;box-shadow:0 0 8px #67e9ff44}
+.eventCard.goodEvent{border-color:#75f0aa!important;box-shadow:0 30px 90px #000e,0 0 35px #71f6a555,inset 0 1px #ffffff26!important}.eventCard.goodEvent .eventIcon{border-color:#75f0aa!important;box-shadow:0 0 24px #71f6a5,inset 0 0 20px #71f6a533!important}
+.eventCard.badEvent{border-color:#ff7085!important;box-shadow:0 30px 90px #000e,0 0 35px #ff667b55,inset 0 1px #ffffff26!important}.eventCard.badEvent .eventIcon{border-color:#ff7085!important;box-shadow:0 0 24px #ff667b,inset 0 0 20px #ff667b33!important}
+.eventCard.moveEvent{border-color:#c7a3ff!important;box-shadow:0 30px 90px #000e,0 0 35px #a982ff55,inset 0 1px #ffffff26!important}.eventCard.moveEvent .eventIcon{border-color:#c7a3ff!important;box-shadow:0 0 24px #a982ff,inset 0 0 20px #a982ff33!important}
+.eventScene{position:relative;height:62px;margin:7px 0 12px;border:1px solid #315c6c;border-radius:12px;overflow:hidden;background:linear-gradient(#102e3d,#07151d)}
+.eventScene .planet{position:absolute;right:10%;bottom:-24px;width:65px;height:65px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#71e4ff,#286884 55%,#123345);box-shadow:0 0 14px #67e9ff}
+.eventScene .ship{position:absolute;left:8%;top:19px;width:35px;height:11px;border-radius:60%;background:#d9f8ff;border:1px solid #7ceaff;animation:eventShip 2.1s ease-in-out infinite}.eventScene .ship:after{content:"";position:absolute;right:-14px;top:3px;border-left:15px solid #ff9c45;border-top:3px solid transparent;border-bottom:3px solid transparent}
+@keyframes eventShip{50%{transform:translateX(40px) translateY(-8px) scale(.85)}}
+.eventScene .pulse{position:absolute;left:50%;top:50%;width:15px;height:15px;border:2px solid #ffd66b;border-radius:50%;transform:translate(-50%,-50%);animation:eventPulse 1.3s ease-out infinite}@keyframes eventPulse{to{width:90px;height:90px;opacity:0}}
+.eventCardClosing{animation:eventCardClosing .4s ease-in forwards!important}@keyframes eventCardClosing{to{opacity:0;transform:rotateY(65deg) scale(.65) translateY(-25px)}}
+@media(max-width:520px){.eventIcon{width:58px!important;height:58px!important;font-size:31px!important}.eventScene{height:46px}.eventTypeBadge{font-size:6px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 4: CAMERA DIRECTOR */
+.board{transform-origin:50% 50%;will-change:transform,filter}
+.board.camMove{animation:camMove .52s cubic-bezier(.2,.8,.2,1)}
+@keyframes camMove{0%{transform:scale(1)}35%{transform:scale(1.025) rotateX(1deg)}100%{transform:scale(1)}}
+.board.camBuy{animation:camBuy .72s cubic-bezier(.15,.8,.2,1)}
+@keyframes camBuy{0%{transform:scale(1)}35%{transform:scale(1.045) rotateZ(-.25deg)}65%{transform:scale(1.025) rotateZ(.18deg)}100%{transform:scale(1)}}
+.board.camBuild{animation:camBuild .9s cubic-bezier(.15,.8,.2,1)}
+@keyframes camBuild{0%{transform:scale(1)}25%{transform:scale(1.055) rotateX(1.4deg)}60%{transform:scale(1.035) rotateX(-.6deg)}100%{transform:scale(1)}}
+.board.camEvent{animation:camEvent .65s ease}
+@keyframes camEvent{0%{transform:scale(1)}45%{transform:scale(.975);filter:brightness(.72) saturate(1.3)}100%{transform:scale(1)}}
+.board.camImpact{animation:camImpact .38s ease}
+@keyframes camImpact{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px) rotate(-.25deg)}40%{transform:translate(4px,-2px) rotate(.25deg)}60%{transform:translate(-2px,-1px)}80%{transform:translate(2px,1px)}}
+.cameraFocus{
+ position:fixed;z-index:187;pointer-events:none;border:3px solid #8defff;border-radius:14px;
+ box-shadow:0 0 12px #67e9ff,0 0 30px #67e9ff55,inset 0 0 15px #67e9ff33;
+ animation:cameraFocus .72s ease forwards
+}
+.cameraFocus.ai{border-color:#ff7188;box-shadow:0 0 12px #ff667b,0 0 30px #ff667b55,inset 0 0 15px #ff667b22}
+@keyframes cameraFocus{0%{opacity:0;transform:scale(1.35)}22%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.92)}}
+.cameraCorners{position:fixed;z-index:188;pointer-events:none;width:54px;height:54px;border-left:3px solid #fff;border-top:3px solid #fff;animation:cameraCorners .7s ease forwards}
+.cameraCorners:after{content:"";position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;border-right:3px solid #fff;border-bottom:3px solid #fff}
+@keyframes cameraCorners{0%{opacity:0;transform:scale(1.5)}25%,70%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
+.directorCaption{
+ position:fixed;z-index:190;left:50%;top:18%;transform:translate(-50%,-50%);
+ padding:5px 10px;border:1px solid #75eaff;border-radius:999px;background:#06131be8;
+ color:#dffbff;font-size:8px;font-weight:1000;letter-spacing:.12em;pointer-events:none;
+ box-shadow:0 0 12px #67e9ff44;animation:directorCaption .8s ease forwards
+}
+@keyframes directorCaption{0%{opacity:0;transform:translate(-50%,-20%) scale(.7)}20%,72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(.85)}}
+.cinematicBars:before,.cinematicBars:after{content:"";position:fixed;left:0;right:0;height:0;background:#000;z-index:185;pointer-events:none;animation:cinBars .9s ease}.cinematicBars:before{top:0}.cinematicBars:after{bottom:0}@keyframes cinBars{25%,70%{height:5.5vh}100%{height:0}}
+@media(max-width:520px){.directorCaption{font-size:6px;top:14%}.cameraFocus{border-width:2px}}
+
+/* GRAPHICS COUNTDOWN — PHASE 3: WORLD + PARTICLE OVERHAUL */
+.worldFxLayer{position:absolute;inset:14.5%;z-index:12;overflow:hidden;pointer-events:none;border-radius:14px}
+.ambientMote{position:absolute;left:var(--x);top:105%;width:var(--sz);height:var(--sz);border-radius:50%;background:#9bf3ff;box-shadow:0 0 7px #67e9ff;opacity:0;animation:moteRise var(--dur) linear var(--delay) infinite}
+@keyframes moteRise{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:.65}75%{opacity:.28}100%{opacity:0;transform:translate(var(--drift),-125vh) scale(1.2)}}
+.meteorFx{position:absolute;left:-15%;top:var(--y);width:70px;height:2px;transform:rotate(-12deg);background:linear-gradient(90deg,transparent,#fff,#76eaff);filter:drop-shadow(0 0 5px #67e9ff);opacity:0;animation:meteorFly var(--dur) linear var(--delay) infinite}
+.meteorFx:after{content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 9px #8defff}
+@keyframes meteorFly{0%,82%{opacity:0;transform:translate(0,0) rotate(-12deg)}84%{opacity:.85}100%{opacity:0;transform:translate(125vw,26vh) rotate(-12deg)}}
+.energyArc{position:absolute;left:var(--x);top:var(--y);width:45px;height:18px;border-top:2px solid #7ceaff;border-radius:50%;filter:drop-shadow(0 0 5px #67e9ff);opacity:0;animation:energyArc var(--dur) ease-in-out var(--delay) infinite}
+@keyframes energyArc{0%,70%,100%{opacity:0;transform:scaleX(.3)}74%,82%{opacity:.8;transform:scaleX(1)}}
+.worldFog{position:absolute;left:-20%;bottom:-5%;width:140%;height:32%;background:radial-gradient(ellipse at 30% 100%,#6eeaff12,transparent 45%),radial-gradient(ellipse at 70% 100%,#9677ff12,transparent 48%);filter:blur(8px);animation:worldFog 9s ease-in-out infinite}
+@keyframes worldFog{50%{transform:translateX(5%) scaleY(1.18);opacity:.55}}
+.worldSpark{position:fixed;z-index:193;width:5px;height:5px;border-radius:50%;background:var(--spark,#ffe275);box-shadow:0 0 8px var(--spark,#ffe275);pointer-events:none;animation:worldSpark .7s ease-out forwards}
+@keyframes worldSpark{to{transform:translate(var(--sx),var(--sy)) scale(.15);opacity:0}}
+.actionSmoke{position:fixed;z-index:192;width:18px;height:13px;border-radius:50%;background:#d7edf0aa;filter:blur(2px);pointer-events:none;animation:actionSmoke .85s ease-out forwards}
+@keyframes actionSmoke{to{transform:translate(var(--dx),-35px) scale(2.3);opacity:0}}
+.actionBurstRing{position:fixed;z-index:191;width:20px;height:20px;border:3px solid var(--ring,#67e9ff);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 12px var(--ring,#67e9ff);animation:actionBurstRing .62s ease-out forwards}
+@keyframes actionBurstRing{to{width:120px;height:120px;opacity:0;border-width:1px}}
+.rentLightning{position:fixed;z-index:194;width:3px;height:var(--len);background:linear-gradient(#fff,#70eaff 35%,#b68cff);transform-origin:50% 0;pointer-events:none;clip-path:polygon(40% 0,100% 0,62% 42%,100% 42%,20% 100%,42% 54%,0 54%);filter:drop-shadow(0 0 6px #7ceaff);animation:rentLightning .38s steps(2) forwards}
+@keyframes rentLightning{0%{opacity:0}15%,65%{opacity:1}100%{opacity:0}}
+.starExplosion{position:fixed;z-index:196;pointer-events:none;font-size:var(--fs);text-shadow:0 0 9px currentColor;animation:starExplosion .85s cubic-bezier(.15,.8,.2,1) forwards}
+@keyframes starExplosion{to{transform:translate(var(--ex),var(--ey)) rotate(var(--rot)) scale(.15);opacity:0}}
+.worldFlash{position:fixed;z-index:186;inset:0;pointer-events:none;background:radial-gradient(circle at var(--fx) var(--fy),#ffffff55,transparent 22%);animation:worldFlash .38s ease-out forwards}
+@keyframes worldFlash{to{opacity:0}}
+.worldNight .ambientMote{background:#b0b9ff;box-shadow:0 0 8px #8894ff}.worldDusk .worldFog{opacity:.8}.worldDay .meteorFx{opacity:.35}
+@media(max-width:520px){.worldFxLayer{inset:15.5%}.ambientMote:nth-child(even),.energyArc:nth-child(even){display:none}}
+
+/* GRAPHICS COUNTDOWN — PHASE 2: CARTOON ANIMATION POLISH */
+.toonToken{transform-origin:50% 100%;will-change:transform}
+.toonToken:not(.walk):not(.land):not(.reactHappy):not(.reactShock):not(.reactAngry):not(.reactBroke):not(.reactJail):not(.reactRich):not(.reactVictory){
+ animation:toonIdleAlive 2.35s ease-in-out infinite
+}
+@keyframes toonIdleAlive{
+ 0%,100%{transform:translateY(0) scale(1,1) rotate(0)}
+ 45%{transform:translateY(-2px) scale(.985,1.025) rotate(-.7deg)}
+ 55%{transform:translateY(-2px) scale(1.015,.985) rotate(.7deg)}
+}
+.toonToken .head{transform-origin:50% 90%;animation:headSecondary 2.35s ease-in-out infinite}
+@keyframes headSecondary{0%,100%{transform:rotate(0)}45%{transform:rotate(2.5deg) translateY(-1px)}70%{transform:rotate(-1.5deg)}}
+.toonToken .arm{transform-origin:50% 10%}
+.toonToken:not(.walk) .arm.l{animation:idleArmL 2.4s ease-in-out infinite}
+.toonToken:not(.walk) .arm.r{animation:idleArmR 2.4s ease-in-out infinite}
+@keyframes idleArmL{0%,100%{transform:rotate(8deg)}50%{transform:rotate(15deg)}}@keyframes idleArmR{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-15deg)}}
+.toonToken.rival .cape{transform-origin:50% 5%;animation:capeFollow 1.35s ease-in-out infinite}
+@keyframes capeFollow{0%,100%{transform:skewX(0) rotate(0)}50%{transform:skewX(-7deg) rotate(3deg) translateX(-2px)}}
+.toonToken.walk .head{animation:walkHead .22s linear infinite}
+@keyframes walkHead{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(3deg)}}
+.toonToken.walk .body{animation:walkBody .22s linear infinite;transform-origin:50% 90%}
+@keyframes walkBody{0%,100%{transform:skewX(-3deg) scaleY(1.02)}50%{transform:skewX(4deg) scaleY(.96)}}
+.toonToken.preMove .head{animation:anticipationHead .18s ease forwards!important}
+@keyframes anticipationHead{to{transform:translateY(3px) rotate(-5deg)}}
+.toonToken.land .head{animation:landingHead .48s ease!important}
+@keyframes landingHead{0%{transform:translateY(-3px)}45%{transform:translateY(4px) rotate(5deg)}75%{transform:translateY(-2px) rotate(-3deg)}}
+.propSprite{transform-origin:50% 100%}
+.cell:hover .propSprite,.cell:active .propSprite{animation:propSquash .38s cubic-bezier(.2,.8,.2,1)!important}
+@keyframes propSquash{0%,100%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) translateY(-4px) scale(.92,1.1)}65%{transform:translateX(-50%) scale(1.07,.93)}}
+.streetCar:before{animation:carCabBounce .34s ease-in-out infinite}@keyframes carCabBounce{50%{transform:translateY(-1px)}}
+.deliveryBot:before{animation:botHeadBob .55s ease-in-out infinite}@keyframes botHeadBob{50%{transform:translateY(-2px) rotate(5deg)}}
+.courierDrone:after{animation:droneRotor .14s linear infinite}@keyframes droneRotor{50%{transform:scaleX(.35);opacity:.4}}
+.landmarkMega{transform-origin:50% 100%}
+.cell.lvl4:hover .landmarkMega{animation:landmarkCartoonPop .55s cubic-bezier(.15,.85,.2,1)!important}
+@keyframes landmarkCartoonPop{30%{transform:translateX(-50%) translateY(-6px) scale(.94,1.1)}60%{transform:translateX(-50%) scale(1.08,.94)}100%{transform:translateX(-50%)}}
+.die:not(.rolling):not(.diceLand):not(.doublesDie){animation:diceIdle .95s ease-in-out infinite alternate}
+@keyframes diceIdle{to{transform:translateY(-2px) rotateZ(1.2deg)}}
+.eventCard button,.modal button,.actionBtn,button{transform-origin:50% 100%}
+button:not(:disabled):active{animation:buttonSquish .22s ease!important}
+@keyframes buttonSquish{45%{transform:translateY(2px) scale(1.06,.86)}100%{transform:none}}
+.cartoonImpact{animation:cartoonImpact .42s cubic-bezier(.15,.85,.2,1)!important}
+@keyframes cartoonImpact{0%{transform:scale(1)}28%{transform:scale(1.12,.84) rotate(-1deg)}55%{transform:scale(.94,1.08) rotate(1deg)}78%{transform:scale(1.03,.97)}100%{transform:none}}
+.cell.cartoonBounce{animation:cellCartoonBounce .46s cubic-bezier(.15,.85,.2,1)!important}
+@keyframes cellCartoonBounce{25%{transform:translateY(-4px) scale(.96,1.06)}50%{transform:translateY(2px) scale(1.06,.91)}75%{transform:translateY(-1px) scale(.98,1.03)}}
+.smearFx{position:fixed;z-index:195;height:7px;border-radius:50%;pointer-events:none;background:linear-gradient(90deg,var(--smear),transparent);filter:blur(1px);transform-origin:100% 50%;animation:smearFx .26s ease-out forwards}
+@keyframes smearFx{to{transform:translateX(-28px) scaleX(.18);opacity:0}}
+.impactGlyph{position:fixed;z-index:197;pointer-events:none;font-size:19px;font-weight:1000;color:#fff4a3;text-shadow:0 0 8px #ffd66b,2px 3px #8b5410;animation:impactGlyph .48s ease-out forwards}
+@keyframes impactGlyph{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-15deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.25) rotate(6deg)}100%{opacity:0;transform:translate(-50%,-85%) scale(.7)}}
+@media(prefers-reduced-motion:reduce){.toonToken,.toonToken *,.propSprite,.landmarkMega,.die{animation-duration:.001ms!important;animation-iteration-count:1!important}}
+
+/* GRAPHICS COUNTDOWN — PHASE 1: FINAL COHESION + DEPTH PASS */
+:root{--ink:#02080d;--rim:#8cecff;--warm:#ffd66b}
+.board{isolation:isolate;backface-visibility:hidden}
+.board:before{
+ content:"";position:absolute;inset:-7px;z-index:-2;border-radius:22px;pointer-events:none;
+ background:linear-gradient(135deg,#7deaff44,transparent 22%,transparent 72%,#ffd66b35);
+ filter:blur(8px);opacity:.75
+}
+.boardShell,.boardWrap{perspective:1100px}
+.cell{
+ outline:1px solid #0009;outline-offset:-2px;
+ text-shadow:0 1px 0 #000,0 0 4px #000;
+ transition:filter .18s ease,box-shadow .18s ease,transform .18s ease
+}
+.cell:after{
+ content:"";position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:inherit;
+ background:linear-gradient(145deg,#ffffff10 0 18%,transparent 35% 72%,#00000022);
+ box-shadow:inset 1px 1px #ffffff12,inset -2px -3px #00000035
+}
+.cell:hover{z-index:20;filter:brightness(1.15) saturate(1.08);box-shadow:0 7px 12px #000b,0 0 10px var(--lightGlow,#67e9ff)!important}
+.propSprite,.landmarkMega,.toonToken,.streetCar,.streetTrain,.deliveryBot,.courierDrone{
+ -webkit-font-smoothing:antialiased;
+}
+.propSprite{filter:drop-shadow(1px 0 0 #061017) drop-shadow(-1px 0 0 #061017) drop-shadow(0 1px 0 #061017) drop-shadow(3px 5px 2px #000a)}
+.landmarkMega{filter:drop-shadow(1px 0 0 #061017) drop-shadow(-1px 0 0 #061017) drop-shadow(0 2px 0 #061017) drop-shadow(5px 7px 3px #000b)}
+.toonToken{filter:drop-shadow(1px 0 0 #061017) drop-shadow(-1px 0 0 #061017) drop-shadow(0 2px 0 #061017) drop-shadow(5px 7px 2px #000b)}
+.toonToken:after{
+ content:"";position:absolute;z-index:-1;left:15%;right:15%;bottom:-4px;height:7px;border-radius:50%;
+ background:#0009;filter:blur(2px);transform:scaleX(1.05)
+}
+.propertyScene:after{
+ content:"";position:absolute;left:6%;right:6%;bottom:0;height:10px;border-radius:50%;
+ background:radial-gradient(ellipse,#0008,transparent 70%);z-index:-1
+}
+.center{
+ box-shadow:inset 0 0 70px #000a,inset 0 0 2px #9defff66,0 0 25px #0009!important;
+}
+.center:before{
+ content:"";position:absolute;inset:2%;z-index:44;border-radius:16px;pointer-events:none;
+ border:1px solid #7deaff25;box-shadow:inset 0 0 30px #67e9ff08
+}
+.foregroundVignette{
+ position:absolute;inset:0;z-index:198;pointer-events:none;border-radius:inherit;
+ box-shadow:inset 0 0 45px #0008,inset 0 -30px 45px #0005
+}
+.foregroundGlint{
+ position:absolute;z-index:199;pointer-events:none;left:-25%;top:-10%;width:16%;height:120%;
+ background:linear-gradient(90deg,transparent,#ffffff12,transparent);
+ transform:skewX(-20deg);animation:foregroundGlint 13s linear infinite
+}
+@keyframes foregroundGlint{to{left:125%}}
+.hud,.panel,.controls,.sidePanel{
+ box-shadow:inset 0 1px #ffffff10,0 7px 18px #0008!important;
+}
+button{
+ border-bottom-width:3px!important;
+ box-shadow:inset 0 1px #ffffff22,0 3px 0 #02080d,0 5px 8px #0006;
+}
+button:not(:disabled):hover{filter:brightness(1.13) saturate(1.1);transform:translateY(-1px)}
+.die{filter:drop-shadow(1px 0 #061017) drop-shadow(-1px 0 #061017)}
+.eventCard{outline:1px solid #000;outline-offset:3px}
+.cycleBadge,.directorCaption,.landmarkLabel,.propSign{backdrop-filter:blur(3px)}
+.streetLife{filter:drop-shadow(0 2px 1px #0008)}
+.worldFxLayer{mix-blend-mode:screen}
+.worldNight .foregroundVignette{box-shadow:inset 0 0 65px #000c,inset 0 -35px 55px #0008}
+.worldDay .foregroundVignette{box-shadow:inset 0 0 35px #0005,inset 0 -22px 30px #0004}
+.finalPolishSpark{
+ position:fixed;z-index:205;width:4px;height:4px;border-radius:50%;pointer-events:none;
+ background:#fff;box-shadow:0 0 8px #8cecff;
+ animation:finalPolishSpark .7s ease-out forwards
+}
+@keyframes finalPolishSpark{to{transform:translate(var(--px),var(--py)) scale(.1);opacity:0}}
+@media(max-width:520px){
+ .board:before{filter:blur(5px)}
+ .cell{outline-width:1px}
+ .foregroundVignette{box-shadow:inset 0 0 25px #0007}
+ button{border-bottom-width:2px!important}
+}
+
+/* GRAPHICS COUNTDOWN — PHASE 0: FINAL RELEASE / PERFORMANCE LOCK */
+html,body{overscroll-behavior:none}
+.board{contain:layout paint style}
+.cell,.toonToken,.propSprite,.landmarkMega,.die{backface-visibility:hidden}
+body.lowFx .ambientMote:nth-of-type(even),
+body.lowFx .meteorFx:nth-of-type(even),
+body.lowFx .energyArc:nth-of-type(even),
+body.lowFx .foregroundGlint{display:none!important}
+body.lowFx .worldFog{filter:blur(5px);opacity:.5}
+body.lowFx .streetLife{opacity:.72}
+body.lowFx .cellLight{animation-duration:5s}
+body.lowFx .starLayerFar,body.lowFx .starLayerNear{animation-duration:40s}
+body.fxPause .worldFxLayer *,body.fxPause .skyDepth *,body.fxPause .streetLife *,
+body.fxPause .districtDecor *,body.fxPause .foregroundGlint{animation-play-state:paused!important}
+.releaseBadge{position:absolute;z-index:50;left:8px;top:8px;padding:3px 7px;border-radius:999px;border:1px solid #7ef0ac;background:#071810df;color:#aaffc5;font-size:6px;font-weight:1000;letter-spacing:.1em;box-shadow:0 0 8px #71f6a544;pointer-events:none}
+.releaseBadge:after{content:"FINAL • FX LOCKED"}
+@media(max-width:520px){
+ .board{contain:layout paint}
+ .worldFxLayer{opacity:.8}
+ .releaseBadge{font-size:5px;padding:2px 5px}
+ .directorCaption{max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+</style></head>
+<body><div class="fxLayer" id="fxLayer"></div>
+<div class="startScreen" id="startScreen"><div class="startCard"><div class="startTitle">EMPIRE GODS</div><p style="color:#9dd8e8">ORBITAL PROPERTY WAR • COMPLETE EDITION</p>
+<input id="playerName" maxlength="18" placeholder="Commander name" value="Commander">
+<select id="difficulty"><option value="easy">Cadet — forgiving AI</option><option value="normal" selected>Commander — standard AI</option><option value="hard">Overlord — aggressive AI</option></select>
+<button class="startBtn" id="newGameBtn">NEW EMPIRE</button><button class="startBtn" id="resumeBtn" style="background:#163648;color:#fff;border:1px solid #4f8095">RESUME SAVED GAME</button>
+<p style="font-size:10px;color:#7fa6b5">Single-file • mobile friendly • progress stored locally</p></div></div>
+<div class="toast" id="toast"></div><div class="comboBadge" id="comboBadge">EMPIRE MOMENTUM</div>
+<div class="diceStage" id="diceStage"><div class="bigDie" id="bigD1">⚀</div><div class="bigDie" id="bigD2">⚀</div></div><div class="turnBanner" id="turnBanner"></div>
+<div class="top"><div class="stats">
+<div class="stat">YOUR CREDITS<b id="cash">$1500</b></div><div class="stat">AI CREDITS<b id="aicash">$1500</b><span id="aiType" style="display:block;color:#9dd8e8;font-size:8px"></span></div>
+<div class="stat">YOUR ASSETS<b id="props">0</b></div><div class="stat">ROUND<b id="round">1</b></div>
+</div></div>
+<div class="gameCompleteStamp">CARTOON 3D • GRAPHICS PHASE 0 • FINAL</div><div class="finalbar"><button class="mini" id="saveBtn">SAVE</button><button class="mini" id="statsBtn">STATS</button><button class="mini" id="resetBtn">NEW GAME</button></div>
+<div class="wrap boardWrap3d"><div class="board" id="board">
+<i class="foregroundVignette"></i><i class="foregroundGlint"></i><div class="worldFxLayer"><i class="worldFog"></i>
+<i class="ambientMote" style="--x:8%;--sz:3px;--dur:9s;--delay:-2s;--drift:22px"></i>
+<i class="ambientMote" style="--x:22%;--sz:2px;--dur:12s;--delay:-8s;--drift:-18px"></i>
+<i class="ambientMote" style="--x:41%;--sz:4px;--dur:11s;--delay:-5s;--drift:30px"></i>
+<i class="ambientMote" style="--x:63%;--sz:2px;--dur:10s;--delay:-4s;--drift:-25px"></i>
+<i class="ambientMote" style="--x:84%;--sz:3px;--dur:13s;--delay:-10s;--drift:18px"></i>
+<i class="meteorFx" style="--y:16%;--dur:10s;--delay:-3s"></i>
+<i class="meteorFx" style="--y:45%;--dur:15s;--delay:-11s"></i>
+<i class="energyArc" style="--x:18%;--y:28%;--dur:7s;--delay:-2s"></i>
+<i class="energyArc" style="--x:69%;--y:57%;--dur:9s;--delay:-6s"></i>
+</div><div class="dayNightSky"><i class="nightStars"></i><i class="twilightBand"></i><i class="sunCycle"></i><i class="moonCycle"></i></div><div class="cycleBadge"></div><div class="releaseBadge"></div><div class="skyDepth"><i class="lightSweep"></i><i class="skyHaze"></i><i class="starLayerFar"></i><i class="starLayerNear"></i><i class="orbitLane l1"></i><i class="orbitLane l2"></i><i class="skyShip s1"></i><i class="skyShip s2"></i><i class="skyShip s3"></i><i class="skyShipReverse"></i><i class="satellite"></i><i class="orbitalStation"></i><i class="atmoBand"></i></div>
+<div class="weatherFx"><i class="moonOrb"></i><i class="searchBeam"></i><i class="starDust s1"></i><i class="starDust s2"></i><i class="starDust s3"></i><i class="starDust s4"></i><i class="ped p1"></i><i class="ped p2"></i><i class="drone d1"></i><i class="drone d2"></i></div>
+<div class="worldFx"><div class="cityCore"></div><div class="holoRing"></div><div class="holoRing r2"></div><div class="skyLane"><i class="flyer f1"></i><i class="flyer f2"></i><i class="orbitDot d1"></i><i class="orbitDot d2"></i><i class="trafficDot t1"></i><i class="trafficDot t2"></i><b class="billboard b1">ORBITAL EXCHANGE</b><b class="billboard b2">EMPIRE LIVE</b></div></div>
+<div class="center">
+<div class="logo">EMPIRE GODS</div><div class="sub">PART 1 • ORBITAL PROPERTY WAR</div>
+<div class="diceRow"><div class="die" id="d1">⚀</div><div class="die" id="d2">⚀</div></div>
+<div class="actions"><button class="btn primary" id="roll">ROLL DICE</button><button class="btn" id="buy" disabled>BUY PROPERTY</button><button class="btn" id="auction" disabled>AUCTION</button><button class="btn" id="trade">TRADE</button><button class="btn" id="finance">FINANCE</button><button class="btn" id="end" disabled>END TURN</button><button class="btn" id="bail" style="display:none">PAY $50 RELEASE</button><button class="btn" id="pass" style="display:none">USE RELEASE PASS</button></div>
+<div class="msg" id="msg">Your empire begins at Launch Gate. Roll the dice.</div>
+<div class="legend">🛸 You &nbsp; • &nbsp; 🤖 Rival AI &nbsp; • &nbsp; Passing Launch Gate earns $200</div>
+</div></div></div>
+<div class="eventFlash" id="eventFlash"><div class="eventCard" id="eventCard"><div class="eventIcon" id="eventIcon">⚡</div><div class="eventTitle" id="eventTitle">SIGNAL EVENT</div><div class="eventEffect" id="eventEffect"></div><div class="eventDesc" id="eventDesc"></div><button class="eventOk" id="eventOk">CONTINUE</button></div></div>
+<div class="market" id="market"><div class="marketCard"><h2 id="marketTitle">ORBITAL MARKET</h2><div id="marketBody"></div><button class="close" id="marketClose" style="margin-top:10px">CLOSE MARKET</button></div></div>
+<div class="deed" id="deed"><div class="deedCard"><div class="deedHead" id="deedHead">PROPERTY DEED</div><div id="deedName" style="font-size:20px;font-weight:1000;text-align:center;margin-top:10px"></div><div id="deedDistrict" class="sub" style="text-align:center"></div>
+<div class="deedScene"><i class="miniShip"></i><i class="miniTower mt1"></i><i class="miniTower mt2"></i><i class="miniTower mt3"></i><b class="miniOwner" id="miniOwner">UNCLAIMED SECTOR</b></div><div class="deedGrid">
+<div>Purchase<b id="deedPrice">—</b></div><div>Base Rent<b id="deedRent">—</b></div><div>Set Rent<b id="deedSet">—</b></div><div>Owner<b id="deedOwner">—</b></div>
+</div><div class="sub" id="deedText" style="margin:8px 2px 8px;line-height:1.5"></div>
+<button class="upgrade" id="upgrade" disabled>BUILD DISTRICT STRUCTURE</button>
+<div class="sub" id="buildInfo" style="text-align:center;margin:7px 0 12px"></div><button class="close" id="closeDeed">CLOSE DEED</button></div></div>
+<script>
+const names=["LAUNCH GATE","Neon Alley","Signal Cache","Ion Avenue","Transit Hub","Nova Street","Event Beacon","Meteor Row","Solar Lane","Holding Bay","Quantum Blvd","Power Grid","Lunar Drive","Comet Way","Skyrail","Aurora Ave","Event Beacon","Titan Street","Cosmos Lane","Free Dock","Zenith Road","Signal Cache","Orbit Avenue","Galaxy Way","Starrail","Pulsar Street","Void Avenue","Power Grid","Nebula Lane","Go To Holding","Eclipse Road","Event Beacon","Astro Avenue","Hyperlane","Warp Rail","Infinity St","Signal Cache","Crown Avenue","Energy Grid","EMPIRE SPIRE"];
+const prices=names.map((_,i)=>i%10===0||[2,6,17,22,30,33,36].includes(i)?0:60+Math.floor(i/5)*30+(i%5)*10);
+const transit=[4,14,24,34], utilities=[11,27,38];
+const groups=[
+{name:"Neon District",color:"#8f72ff",ids:[1,3,5]},
+{name:"Solar District",color:"#55d6ff",ids:[8,12,13]},
+{name:"Aurora District",color:"#ff6f91",ids:[15,18,21]},
+{name:"Orbital District",color:"#ff9f43",ids:[23,26,28]},
+{name:"Eclipse District",color:"#ffd85c",ids:[31,32,35]},
+{name:"Crown District",color:"#64f29c",ids:[37,39]}
+];
+function groupOf(i){return groups.find(g=>g.ids.includes(i))}
+function typeOf(i){return transit.includes(i)?"Transit Network":utilities.includes(i)?"Energy Utility":groupOf(i)?.name||"Special Sector"}
+function rentFor(i,owner){
+ if(!prices[i]||s.mort[i])return 0;
+ if(transit.includes(i)){let count=transit.filter(x=>s.own[x]===owner).length;return [0,25,50,100,200][count]}
+ if(utilities.includes(i)){let count=utilities.filter(x=>s.own[x]===owner).length;return count>=2?80:35}
+ let g=groupOf(i),base=Math.max(12,Math.floor(prices[i]*.18));
+ if(g&&g.ids.every(x=>s.own[x]===owner))base*=2;
+ let level=s.build[i]||0;
+ if(level) base=Math.floor(base*[1,2,3.5,5.5,8][level]);
+ return base;
+}
+
+let s={p:0,a:0,c:1500,ac:1500,own:{},build:{},turn:"p",round:1,pending:false,
+holdP:0,holdA:0,holdTurnsP:0,holdTurnsA:0,doublesP:0,doublesA:0,releaseP:0,releaseA:0,mort:{},over:false,aiProfile:null,playerName:"Commander",difficulty:"normal",stats:{rolls:0,buys:0,rentPaid:0,rentEarned:0,events:0,auctions:0,trades:0,builds:0}};
+
+const aiProfiles=[
+{name:"THE MOGUL",icon:"👑",reserve:300,buy:1.12,build:.78,auction:1.38,trade:.90,desc:"Aggressive district collector"},
+{name:"THE BANKER",icon:"🏦",reserve:550,buy:.88,build:.48,auction:1.05,trade:1.08,desc:"Cash-heavy defensive strategist"},
+{name:"THE ARCHITECT",icon:"🏙️",reserve:250,buy:1.02,build:.92,auction:1.18,trade:.95,desc:"Prioritizes complete districts and landmarks"},
+{name:"THE SHARK",icon:"🦈",reserve:180,buy:1.18,build:.68,auction:1.52,trade:.82,desc:"High-risk auctions and acquisitions"}
+];
+s.aiProfile=aiProfiles[Math.floor(Math.random()*aiProfiles.length)];
+function aiP(){return s.aiProfile||aiProfiles[0]}
+function aiOwnsInGroup(i){let g=groupOf(i);return g?g.ids.filter(x=>s.own[x]==="a").length:0}
+function aiPurchaseValue(i){
+ let v=prices[i]||0,g=groupOf(i),p=aiP();
+ if(g){let held=aiOwnsInGroup(i);v*=1+held*.28;if(held===g.ids.length-1)v*=1.55}
+ if(transit.includes(i))v*=1+transit.filter(x=>s.own[x]==="a").length*.18;
+ if(utilities.includes(i))v*=1+utilities.filter(x=>s.own[x]==="a").length*.16;
+ return Math.floor(v*p.buy*diffFactor())
+}
+function aiShouldBuy(i){
+ let p=aiP(),v=aiPurchaseValue(i),cashAfter=s.ac-prices[i];
+ return prices[i]>0&&!s.own[i]&&s.ac>=prices[i]&&cashAfter>=Math.min(p.reserve,Math.max(80,p.reserve-v*.15));
+}
+function aiBuildPhase(){
+ let p=aiP(),candidates=Object.keys(s.own).filter(k=>s.own[k]==="a").map(Number).filter(i=>{
+  let g=groupOf(i);return g&&g.ids.every(x=>s.own[x]==="a")&&!s.mort[i]&&(s.build[i]||0)<4;
+ }).sort((a,b)=>aiPurchaseValue(b)-aiPurchaseValue(a));
+ for(let i of candidates){let cost=buildCost(i);if(s.ac-cost>=p.reserve&&Math.random()<p.build){s.ac-=cost;s.build[i]=(s.build[i]||0)+1;msg.textContent+=` ${p.icon} ${p.name} developed ${names[i]}.`;setTimeout(()=>constructionFx(i),80);break}}
+}
+function aiRestorePhase(){
+ let p=aiP();for(let k of Object.keys(s.mort)){let i=+k;if(s.own[i]==="a"){let c=unmortgageCost(i);if(s.ac-c>p.reserve+150){s.ac-=c;delete s.mort[i];break}}}
+}
+const signalCards=[
+{icon:"💳",title:"DATA ROYALTY",effect:"+$120",desc:"A licensing stream from one of your orbital patents clears.",kind:"cash",v:120},
+{icon:"🔧",title:"REACTOR REPAIR",effect:"-$85",desc:"Emergency maintenance crews stabilize your district grid.",kind:"cash",v:-85},
+{icon:"🚀",title:"SLINGSHOT VECTOR",effect:"Advance 6 spaces",desc:"A gravity assist launches your token farther around the orbital ring.",kind:"move",v:6},
+{icon:"🌀",title:"WORMHOLE DRIFT",effect:"Move back 3 spaces",desc:"A navigation anomaly drops you behind your expected position.",kind:"move",v:-3},
+{icon:"🏦",title:"TRADE DIVIDEND",effect:"+$200",desc:"Interstellar commerce posts an unexpected quarterly surplus.",kind:"cash",v:200},
+{icon:"⚠️",title:"DOCKING FINE",effect:"-$60",desc:"Your vessel accumulated an automated port-access penalty.",kind:"cash",v:-60},
+{icon:"🛰️",title:"LAUNCH EXPRESS",effect:"Jump to Launch Gate",desc:"Priority transit returns you to the beginning and awards the normal gate bonus.",kind:"launch",v:200},
+{icon:"🔒",title:"SECURITY HOLD",effect:"Go to Holding Bay",desc:"Station security diverts your ship for inspection.",kind:"hold",v:0}
+];
+signalCards.push({icon:"🎫",title:"SECURITY OVERRIDE",effect:"Keep release pass",desc:"Store this pass and use it to leave Holding Bay without paying.",kind:"pass",v:1});
+const fortuneCards=[
+{icon:"💎",title:"QUANTUM WINDFALL",effect:"+$250",desc:"A rare resource contract settles instantly.",kind:"cash",v:250},
+{icon:"☄️",title:"DEBRIS DAMAGE",effect:"-$110",desc:"Hull repairs are required after an unexpected debris strike.",kind:"cash",v:-110},
+{icon:"🌌",title:"DEEP SPACE ROUTE",effect:"Advance 4 spaces",desc:"A newly charted corridor shortens your route.",kind:"move",v:4},
+{icon:"🧾",title:"CITY ASSESSMENT",effect:"Development tax",desc:"Pay $35 for each structure level currently under your control.",kind:"buildtax",v:35}
+];
+let eventResolve=null;
+
+const B=document.getElementById("board"),msg=document.getElementById("msg"),roll=document.getElementById("roll"),buy=document.getElementById("buy"),end=document.getElementById("end"),auction=document.getElementById("auction"),trade=document.getElementById("trade"),finance=document.getElementById("finance"),market=document.getElementById("market"),marketBody=document.getElementById("marketBody");
+const fxLayer=document.getElementById("fxLayer");let lastBuildFx=-1;
+const SAVEKEY="empireGods.complete.v1";
+function toast(t){let e=document.getElementById("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),1200)}
+function safeSave(show=true){try{localStorage.setItem(SAVEKEY,JSON.stringify(s));if(show)toast("EMPIRE SAVED")}catch(e){if(show)toast("SAVE UNAVAILABLE")}}
+function loadSave(){try{let q=JSON.parse(localStorage.getItem(SAVEKEY)||"null");if(!q)return false;s=Object.assign(s,q);s.stats=Object.assign({rolls:0,buys:0,rentPaid:0,rentEarned:0,events:0,auctions:0,trades:0,builds:0},q.stats||{});return true}catch(e){return false}}
+function diffFactor(){return s.difficulty==="easy"?.82:s.difficulty==="hard"?1.22:1}
+function autosave(){if(!s.over)safeSave(false)}
+
+
+
+
+
+
+
+function finalShine(){
+ let q=document.createElement("i");q.className="finalShine";document.body.appendChild(q);setTimeout(()=>q.remove(),1250)
+}
+function screenShake(){
+ document.body.classList.remove("screenShake");void document.body.offsetWidth;document.body.classList.add("screenShake");setTimeout(()=>document.body.classList.remove("screenShake"),380)
+}
+function crownRain(){
+ for(let i=0;i<22;i++)setTimeout(()=>{let q=document.createElement("i");q.className="crownFx";q.textContent=i%3===0?"👑":"✦";q.style.left=Math.random()*100+"vw";q.style.top="-40px";q.style.animationDelay=(Math.random()*.3)+"s";document.body.appendChild(q);setTimeout(()=>q.remove(),2200)},i*45)
+}
+function cinematicTilt(){B.classList.remove("cinematicTilt");void B.offsetWidth;B.classList.add("cinematicTilt")}
+function updateWorldCycle(){
+ if(!B)return;
+ B.classList.remove("worldDay","worldDusk","worldNight","nightPulse");
+ let phase=s.round%6;
+ let mode=(phase===0||phase===1)?"worldDay":(phase===2||phase===5)?"worldDusk":"worldNight";
+ B.classList.add(mode);
+}
+function roundFx(){
+ let q=document.createElement("i");q.className="roundFlash";document.body.appendChild(q);setTimeout(()=>q.remove(),750);
+ updateWorldCycle();
+ if(s.round%5===0)bigReaction("ROUND "+s.round,true)
+}
+let momentum=0,momentumTimer=null;
+function momentumFx(label){
+ momentum++;let e=document.getElementById("comboBadge");e.textContent="⚡ "+label+" • MOMENTUM x"+momentum;e.classList.add("show");
+ clearTimeout(momentumTimer);momentumTimer=setTimeout(()=>{momentum=0;e.classList.remove("show")},3500)
+}
+function warpFx(){
+ let q=document.createElement("i");q.className="warpFx";document.body.appendChild(q);setTimeout(()=>q.remove(),750);document.querySelectorAll(".die").forEach(d=>impactGlyphAt(d,"THUD!"));cameraPunch()
+}
+function confettiBurst(x=innerWidth/2,y=innerHeight*.35){
+ for(let i=0;i<18;i++){let q=document.createElement("i");q.className="confetti";q.style.left=x+"px";q.style.top=y+"px";q.style.setProperty("--x",(Math.random()*260-130)+"px");q.style.setProperty("--y",(70+Math.random()*180)+"px");q.style.transform=`rotate(${Math.random()*180}deg)`;document.body.appendChild(q);setTimeout(()=>q.remove(),1250)}
+}
+function bigReaction(text,good=true){
+ let e=document.createElement("div");e.className="bigReaction";e.textContent=text;e.style.color=good?"#ffd76a":"#ff6577";document.body.appendChild(e);setTimeout(()=>e.remove(),950)
+}
+function tileReaction(pos,good=true){
+ let c=cellForPos(pos);if(!c)return;c.classList.remove("dangerFlash","rewardFlash");void c.offsetWidth;c.classList.add(good?"rewardFlash":"dangerFlash");setTimeout(()=>c.classList.remove("dangerFlash","rewardFlash"),650)
+}
+function turnBanner(text){let e=document.getElementById("turnBanner");e.textContent=text;e.classList.remove("go");void e.offsetWidth;e.classList.add("go")}
+function cameraPunch(){B.classList.add("cameraPunch");setTimeout(()=>B.classList.remove("cameraPunch"),420)}
+function coinBurst(w,amount){
+ let el=document.getElementById(w==="p"?"cash":"aicash"),r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.bottom;
+ for(let i=0;i<Math.min(10,3+Math.floor(Math.abs(amount)/40));i++){let q=document.createElement("i");q.className="coin";q.style.left=x+"px";q.style.top=y+"px";q.style.setProperty("--cx",(Math.random()*130-65)+"px");q.style.setProperty("--cy",(40+Math.random()*90)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),850)}
+}
+function cinematicDice(){
+ let vals=lastDice,stage=document.getElementById("diceStage");document.getElementById("bigD1").textContent=["⚀","⚁","⚂","⚃","⚄","⚅"][vals[0]-1];document.getElementById("bigD2").textContent=["⚀","⚁","⚂","⚃","⚄","⚅"][vals[1]-1];stage.classList.remove("show");void stage.offsetWidth;stage.classList.add("show");cameraPunch();setTimeout(()=>stage.classList.remove("show"),620)
+}
+function burst(text,x=innerWidth/2,y=innerHeight*.42,good=true){
+ let e=document.createElement("div");e.className="floatFx";e.textContent=text;e.style.left=x+"px";e.style.top=y+"px";e.style.color=good?"#71f6a5":"#ff6577";fxLayer.appendChild(e);setTimeout(()=>e.remove(),1200);
+ for(let n=0;n<10;n++){let q=document.createElement("i");q.className="spark";q.style.left=x+"px";q.style.top=y+"px";q.style.color=good?"#71f6a5":"#ff6577";q.style.setProperty("--dx",(Math.random()*120-60)+"px");q.style.setProperty("--dy",(Math.random()*120-60)+"px");fxLayer.appendChild(q);setTimeout(()=>q.remove(),800)}
+}
+function boardPulse(){B.classList.remove("pulse");void B.offsetWidth;B.classList.add("pulse")}
+function charEl(w){let cell=[...document.querySelectorAll(".cell")][w==="p"?s.p:s.a];return cell?cell.querySelector(".toonToken"):null}
+
+function cellForPos(pos){return [...document.querySelectorAll(".cell")][pos]||null}
+
+function districtCelebration(i,w){
+ let g=groupOf(i);if(!g||!g.ids.every(x=>s.own[x]===w))return;
+ g.ids.forEach((id,n)=>setTimeout(()=>{let c=cellForPos(id);if(c){let q=document.createElement("i");q.className="districtPulse";c.appendChild(q);setTimeout(()=>q.remove(),950)}},n*100));
+ if(w==="p"){setTimeout(()=>{bigReaction(g.name.toUpperCase()+"!",true);finalShine();cinematicTilt();momentumFx("DISTRICT COMPLETE");confettiBurst()},180)}
+}
+function constructionFx(i){
+ let c=cellForPos(i);if(!c)return;
+ c.classList.add("constructing");
+ let site=document.createElement("span");site.className="buildSiteFx";
+ site.innerHTML='<i class="craneFx"></i><i class="scaffoldFx"></i><i class="riseBuildingFx"></i><i class="hammerFx">🔨</i><b class="constructBanner">SECTOR CONSTRUCTION</b>';
+ c.appendChild(site);
+ for(let n=0;n<11;n++)setTimeout(()=>{
+   if(!site.isConnected)return;
+   let q=document.createElement("i");q.className="weldSpark";q.style.left=(35+Math.random()*42)+"%";q.style.top=(35+Math.random()*38)+"%";
+   q.style.setProperty("--sx",(Math.random()*34-17)+"px");q.style.setProperty("--sy",(Math.random()*28-14)+"px");site.appendChild(q);setTimeout(()=>q.remove(),560)
+ },n*65);
+ for(let n=0;n<5;n++){
+   let q=document.createElement("i");q.className="dustPuff";q.style.left=(25+Math.random()*55)+"%";q.style.bottom=(1+Math.random()*5)+"px";
+   q.style.setProperty("--dx",(Math.random()*24-12)+"px");site.appendChild(q);setTimeout(()=>q.remove(),850)
+ }
+ setTimeout(()=>{site.remove();c.classList.remove("constructing");draw();tileReaction(i,true)},1250)
+}
+function rentBeam(fromW,toW){
+ let a=charEl(fromW),b=charEl(toW);if(!a||!b)return;let A=a.getBoundingClientRect(),B=b.getBoundingClientRect(),x=A.left+A.width/2,y=A.top+A.height/2,x2=B.left+B.width/2,y2=B.top+B.height/2,dx=x2-x,dy=y2-y;
+ let q=document.createElement("i");q.className="rentBeam";q.style.left=x+"px";q.style.top=y+"px";q.style.width=Math.hypot(dx,dy)+"px";q.style.transform=`rotate(${Math.atan2(dy,dx)}rad)`;document.body.appendChild(q);setTimeout(()=>q.remove(),600)
+}
+
+
+function moneyAnchor(w){let e=charEl(w);if(!e)return{x:innerWidth/2,y:innerHeight/2};let r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
+function moneyPopFx(w,n){let a=moneyAnchor(w),q=document.createElement("b");q.className="moneyPop "+(n>=0?"gain":"loss");q.textContent=(n>=0?"+":"-")+"¢"+Math.abs(n);q.style.left=a.x+"px";q.style.top=(a.y-12)+"px";document.body.appendChild(q);setTimeout(()=>q.remove(),950)}
+function creditTransfer(from,to,n){let a=moneyAnchor(from),b=moneyAnchor(to),ct=Math.max(5,Math.min(12,Math.ceil(Math.abs(n)/35)));for(let i=0;i<ct;i++)setTimeout(()=>{let q=document.createElement("i");q.className="creditCoin";q.style.left=a.x+"px";q.style.top=a.y+"px";q.style.setProperty("--mx",((b.x-a.x)*.5+Math.random()*60-30)+"px");q.style.setProperty("--my",((b.y-a.y)*.35-30-Math.random()*30)+"px");q.style.setProperty("--tx",(b.x-a.x)+"px");q.style.setProperty("--ty",(b.y-a.y)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),950)},i*38);moneyPopFx(from,-n);moneyPopFx(to,n)}
+function rewardMoneyFx(w,n){let a=moneyAnchor(w);moneyPopFx(w,n);for(let i=0;i<3;i++){let q=document.createElement("i");q.className="cashStackFx";q.style.left=(a.x-13+Math.random()*18-9)+"px";q.style.top=a.y+"px";q.style.animationDelay=(i*.08)+"s";document.body.appendChild(q);setTimeout(()=>q.remove(),1000)}}
+function spendMoneyFx(w,n){let a=moneyAnchor(w);moneyPopFx(w,-n);let r=document.createElement("i");r.className="moneyBurst";r.style.left=a.x+"px";r.style.top=a.y+"px";document.body.appendChild(r);setTimeout(()=>r.remove(),700);for(let i=0;i<7;i++)setTimeout(()=>{let q=document.createElement("i");q.className="creditCoin";q.style.left=a.x+"px";q.style.top=a.y+"px";q.style.setProperty("--mx",(Math.random()*70-35)+"px");q.style.setProperty("--my",(-20-Math.random()*40)+"px");q.style.setProperty("--tx",(Math.random()*120-60)+"px");q.style.setProperty("--ty",(30+Math.random()*45)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),950)},i*35)}
+function bankruptcyMoneyFx(w){let a=moneyAnchor(w);screenShake();for(let i=0;i<22;i++){let q=document.createElement("i");q.className="bankruptShard";q.style.left=a.x+"px";q.style.top=a.y+"px";q.style.setProperty("--x",(Math.random()*250-125)+"px");q.style.setProperty("--y",(Math.random()*210-90)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),1150)}let z=document.createElement("div");z.className="bankruptStamp";z.textContent="EMPIRE COLLAPSE";document.body.appendChild(z);setTimeout(()=>z.remove(),1050)}
+function emotion(w,type,emoji){
+ let e=charEl(w);if(!e)return;
+ let cls={happy:"reactHappy",shock:"reactShock",angry:"reactAngry",broke:"reactBroke",jail:"reactJail",rich:"reactRich",victory:"reactVictory"}[type]||"reactHappy";
+ e.classList.add(cls);
+ if(type==="angry"){let m=document.createElement("b");m.className="angerMark";m.textContent="💢";e.appendChild(m);setTimeout(()=>m.remove(),800)}
+ if(type==="shock"||type==="broke"){let d=document.createElement("i");d.className="sweatDrop";e.appendChild(d);setTimeout(()=>d.remove(),800)}
+ let r=e.getBoundingClientRect(),b=document.createElement("div");b.className="emoteBubble"+(w==="a"?" ai":"");b.textContent=emoji||"!";
+ b.style.left=(r.left+r.width/2)+"px";b.style.top=(r.top-8)+"px";document.body.appendChild(b);
+ setTimeout(()=>{e.classList.remove(cls);b.remove()},1000)
+}
+function jailEmotion(w){
+ emotion(w,"jail","🔒");setTimeout(()=>{let e=charEl(w);if(!e)return;let r=e.getBoundingClientRect(),q=document.createElement("i");q.className="jailBarsFx";q.style.left=(r.left+r.width/2-21)+"px";q.style.top=(r.top-7)+"px";document.body.appendChild(q);setTimeout(()=>q.remove(),950)},40)
+}
+function charAction(w,cls,emoji){
+ let e=charEl(w);if(!e)return;e.classList.add(cls);let r=document.createElement("b");r.className="reaction";r.textContent=emoji;e.appendChild(r);setTimeout(()=>e.classList.remove(cls),700);setTimeout(()=>r.remove(),850)
+}
+
+function cashFx(w,delta){coinBurst(w,delta);let el=document.getElementById(w==="p"?"cash":"aicash");el.classList.remove("moneyPulse");void el.offsetWidth;el.classList.add("moneyPulse");let r=el.getBoundingClientRect();burst((delta>=0?"+":"")+"$"+delta,r.left+r.width/2,r.bottom+18,delta>=0)}
+
+
+
+
+
+
+const FINAL_FX={
+ low:(matchMedia("(max-width:520px)").matches||((navigator.deviceMemory||8)<=4)),
+ paused:false
+};
+if(FINAL_FX.low)document.body.classList.add("lowFx");
+document.addEventListener("visibilitychange",()=>{
+ FINAL_FX.paused=document.hidden;
+ document.body.classList.toggle("fxPause",document.hidden);
+});
+window.addEventListener("pagehide",()=>{try{safeSave(false)}catch(e){}},{passive:true});
+window.addEventListener("error",e=>{
+ try{document.querySelectorAll(".cameraFocus,.cameraCorners,.directorCaption,.worldFlash,.eventCardClosing").forEach(x=>x.remove())}catch(_){}
+});
+function polishSparkAt(x,y){
+ for(let n=0;n<6;n++){let q=document.createElement("i");q.className="finalPolishSpark";q.style.left=x+"px";q.style.top=y+"px";q.style.setProperty("--px",(Math.random()*70-35)+"px");q.style.setProperty("--py",(Math.random()*60-40)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),760)}
+}
+function cartoonSmear(w){if(FINAL_FX.low)return;
+ let e=charEl(w);if(!e)return;let r=e.getBoundingClientRect(),col=w==="a"?"#ff667b":"#67e9ff";
+ for(let n=0;n<3;n++){let q=document.createElement("i");q.className="smearFx";q.style.left=(r.left-8)+"px";q.style.top=(r.top+r.height*.35+n*6)+"px";q.style.width=(28+n*8)+"px";q.style.setProperty("--smear",col);document.body.appendChild(q);setTimeout(()=>q.remove(),320)}
+}
+function impactGlyphAt(el,glyph="POW!"){
+ if(!el)return;let r=el.getBoundingClientRect(),q=document.createElement("b");q.className="impactGlyph";q.textContent=glyph;q.style.left=(r.left+r.width/2)+"px";q.style.top=(r.top+r.height*.3)+"px";document.body.appendChild(q);setTimeout(()=>q.remove(),520)
+}
+function cartoonTileBounce(i,glyph){
+ let e=cellForPos(i);if(!e)return;e.classList.remove("cartoonBounce");void e.offsetWidth;e.classList.add("cartoonBounce");if(glyph)impactGlyphAt(e,glyph);setTimeout(()=>e.classList.remove("cartoonBounce"),500)
+}
+function worldBurstAt(x,y,kind="cyan",amount=16){if(FINAL_FX.low)amount=Math.min(amount,8);
+ let cols={cyan:"#75efff",gold:"#ffd66b",red:"#ff667b",violet:"#b996ff",green:"#78f2a5"},col=cols[kind]||cols.cyan;
+ let ring=document.createElement("i");ring.className="actionBurstRing";ring.style.left=x+"px";ring.style.top=y+"px";ring.style.setProperty("--ring",col);document.body.appendChild(ring);setTimeout(()=>ring.remove(),700);
+ for(let n=0;n<amount;n++){let q=document.createElement("i");q.className="worldSpark";q.style.left=x+"px";q.style.top=y+"px";q.style.setProperty("--spark",col);q.style.setProperty("--sx",(Math.random()*130-65)+"px");q.style.setProperty("--sy",(Math.random()*110-70)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),760)}
+}
+function smokeAt(x,y,count=5){for(let n=0;n<count;n++){let q=document.createElement("i");q.className="actionSmoke";q.style.left=(x+Math.random()*24-12)+"px";q.style.top=(y+Math.random()*8)+"px";q.style.setProperty("--dx",(Math.random()*40-20)+"px");document.body.appendChild(q);setTimeout(()=>q.remove(),900)}}
+function tileWorldBurst(i,kind="cyan"){let e=cellForPos(i);if(!e)return;let r=e.getBoundingClientRect();worldBurstAt(r.left+r.width/2,r.top+r.height/2,kind,14);polishSparkAt(r.left+r.width/2,r.top+r.height/2)}
+function characterBurst(w,kind="cyan"){let e=charEl(w);if(!e)return;let r=e.getBoundingClientRect();worldBurstAt(r.left+r.width/2,r.top+r.height/2,kind,12)}
+function lightningBetween(from,to){let a=moneyAnchor(from),b=moneyAnchor(to),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)*180/Math.PI-90,q=document.createElement("i");q.className="rentLightning";q.style.left=a.x+"px";q.style.top=a.y+"px";q.style.height=len+"px";q.style.setProperty("--len",len+"px");q.style.transform="rotate("+ang+"deg)";document.body.appendChild(q);setTimeout(()=>q.remove(),430)}
+function megaStarBurst(w){let a=moneyAnchor(w),mx=FINAL_FX.low?10:22;for(let n=0;n<mx;n++){let q=document.createElement("b");q.className="starExplosion";q.textContent=n%3?"★":"✦";q.style.color=n%2?"#ffd66b":"#75efff";q.style.left=a.x+"px";q.style.top=a.y+"px";q.style.setProperty("--fs",(8+Math.random()*13)+"px");q.style.setProperty("--ex",(Math.random()*260-130)+"px");q.style.setProperty("--ey",(Math.random()*220-140)+"px");q.style.setProperty("--rot",(Math.random()*720-360)+"deg");document.body.appendChild(q);setTimeout(()=>q.remove(),920)}}
+function directorBoard(cls,dur=700){
+ let b=document.querySelector(".board");if(!b)return;
+ ["camMove","camBuy","camBuild","camEvent","camImpact"].forEach(x=>b.classList.remove(x));
+ void b.offsetWidth;b.classList.add(cls);setTimeout(()=>b.classList.remove(cls),dur)
+}
+function directorFocus(target,label,ai=false){document.querySelectorAll(".cameraFocus,.cameraCorners").forEach(x=>x.remove());
+ let e=typeof target==="number"?cellForPos(target):target;if(!e)return;
+ let r=e.getBoundingClientRect(),q=document.createElement("i");q.className="cameraFocus"+(ai?" ai":"");
+ q.style.left=(r.left-4)+"px";q.style.top=(r.top-4)+"px";q.style.width=(r.width+8)+"px";q.style.height=(r.height+8)+"px";document.body.appendChild(q);
+ let c=document.createElement("i");c.className="cameraCorners";c.style.left=(r.left+r.width/2-27)+"px";c.style.top=(r.top+r.height/2-27)+"px";document.body.appendChild(c);
+ if(label){let t=document.createElement("b");t.className="directorCaption";t.textContent=label;document.body.appendChild(t);setTimeout(()=>t.remove(),850)}
+ setTimeout(()=>{q.remove();c.remove()},780)
+}
+function cinematicBarsFx(){
+ document.body.classList.add("cinematicBars");setTimeout(()=>document.body.classList.remove("cinematicBars"),950)
+}
+function movementTrail(w){
+ let e=charEl(w);if(!e)return;let r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.bottom-2;
+ let q=document.createElement("i");q.className="stepTrail"+(w==="a"?" ai":"");q.style.left=x+"px";q.style.top=y+"px";document.body.appendChild(q);setTimeout(()=>q.remove(),520);
+ for(let k=0;k<2;k++){let l=document.createElement("i");l.className="speedLine"+(w==="a"?" ai":"");l.style.left=(x-4-Math.random()*10)+"px";l.style.top=(y-8-Math.random()*15)+"px";document.body.appendChild(l);setTimeout(()=>l.remove(),380)}
+}
+function landingFx(w){
+ let e=charEl(w);if(!e)return;let r=e.getBoundingClientRect(),q=document.createElement("i");q.className="landRing"+(w==="a"?" ai":"");q.style.left=(r.left+r.width/2)+"px";q.style.top=(r.bottom-2)+"px";document.body.appendChild(q);setTimeout(()=>q.remove(),600)
+}
+function animateMove(w,n,done){
+ let steps=Math.abs(n),dir=n>=0?1:-1;if(!steps){done&&done();return}
+ let count=0,first=charEl(w);
+ if(first){first.classList.add("preMove");setTimeout(()=>first.classList.remove("preMove"),180)}
+ setTimeout(()=>{
+  let timer=setInterval(()=>{
+   let old=s[w];s[w]=(s[w]+dir+40)%40;
+   if(dir>0&&s[w]<old){if(w==="p"){s.c+=200;cashFx("p",200)}else{s.ac+=200;cashFx("a",200)}}
+   draw();boardPulse();directorBoard("camMove",420);if(count===0)directorFocus(s[w],w==="p"?"COMMANDER MOVING":"RIVAL MOVING",w==="a");
+   let e=charEl(w);
+   if(e){e.classList.add("walk",dir>0?"movingRight":"movingLeft")}
+   movementTrail(w);cartoonSmear(w);
+   count++;
+   if(count>=steps){
+    clearInterval(timer);
+    setTimeout(()=>{
+     draw();directorFocus(s[w],w==="p"?"COMMANDER ARRIVED":"RIVAL ARRIVED",w==="a");landingFx(w);characterBurst(w,w==="a"?"red":"cyan");impactGlyphAt(charEl(w),"BOOM!");cameraPunch();charAction(w,"land","✨");done&&done()
+    },110)
+   }
+  },145)
+ },180)
+}
+
+function pos(i){let st={}; if(i===0)return{left:86,top:86,w:14,h:14};if(i<10)return{left:86-i*8,top:86,w:8,h:14};if(i===10)return{left:0,top:86,w:14,h:14};if(i<20)return{left:0,top:86-(i-10)*8,w:14,h:8};if(i===20)return{left:0,top:0,w:14,h:14};if(i<30)return{left:6+(i-20)*8,top:0,w:8,h:14};if(i===30)return{left:86,top:0,w:14,h:14};return{left:86,top:6+(i-30)*8,w:14,h:8}}
+function draw(){document.querySelectorAll(".cell").forEach(x=>x.remove());for(let i=0;i<40;i++){let p=pos(i),e=document.createElement("div");e.className="cell";e.style=`left:${p.left}%;top:${p.top}%;width:${p.w}%;height:${p.h}%`;if(s.own[i])e.classList.add("owned",s.own[i]==="p"?"player":"ai");if(s.mort[i])e.classList.add("mort");
+let lvl=s.build[i]||0;if(lvl)e.classList.add("lvl"+lvl);let sprite=(cls,label)=>`<span class="token toonToken ${cls}" title="${label}"><i class="face"></i><i class="arm l"></i><i class="arm r"></i><i class="leg l"></i><i class="leg r"></i>${cls==="hero"?'<i class="commanderVisor"></i><i class="commanderBadge"></i><i class="commanderPack"></i><i class="commanderBoot bl"></i><i class="commanderBoot br"></i>':""}${cls==="rival"?'<i class="rivalHorn hl"></i><i class="rivalHorn hr"></i><i class="rivalCape"></i><i class="rivalEyeGlow"></i><i class="rivalCore"></i><i class="rivalBoot bl"></i><i class="rivalBoot br"></i>':""}<i class="shadowBlob"></i></span>`;
+let t=(s.p===i?sprite("hero","You"):"")+(s.a===i?sprite("rival","Rival"):"");let g=groupOf(i),band=g?`<span class="band" style="background:${g.color}"></span>`:(transit.includes(i)?`<span class="band" style="background:#d9e5eb"></span>`:(utilities.includes(i)?`<span class="band" style="background:#66f2c2"></span>`:""));
+let theme=g?g.name.split(" ")[0].toLowerCase():transit.includes(i)?"transit":utilities.includes(i)?"utility":"special";e.dataset.theme=theme;let city="";
+if(lvl===1)city='<div class="toonCity"><i class="toonBld"></i></div>';
+if(lvl===2)city='<div class="toonCity"><i class="toonBld"></i><i class="toonBld t2"></i></div>';
+if(lvl===3)city='<div class="toonCity"><i class="toonBld"></i><i class="toonBld t2"></i><i class="toonBld t3"></i></div>';
+if(lvl===4)city='<div class="toonCity"><i class="toonLandmark"></i></div>';
+let builds=lvl?`<div class="buildings">${lvl<4?"◆".repeat(lvl):"★"}</div>${city}`:"";
+let flag=s.own[i]?`<i class="propertyFlag ${s.own[i]==="a"?"ai":""}"></i>`:"";
+let mascot=s.own[i]&&prices[i]?`<i class="mascot ${s.own[i]==="a"?"ai":""}"><b class="eyes"></b></i>`:"";
+let vehicle=transit.includes(i)?'<i class="tinyVehicle rail"></i>':utilities.includes(i)?'<i class="tinyVehicle energy"></i>':(s.own[i]&&prices[i]?'<i class="tinyVehicle"></i>':'');
+let zone=g?`<span class="zoneLabel">${g.name.replace(" District","")}</span>`:"";
+
+
+let districtDecor="";
+if(theme==="neon")districtDecor='<span class="districtDecor neon"><i class="road"></i><i class="sign"></i></span>';
+else if(theme==="solar")districtDecor='<span class="districtDecor solar"><i class="sun"></i><i class="panel"></i></span>';
+else if(theme==="aurora")districtDecor='<span class="districtDecor aurora"><i class="tree"></i><i class="tree t2"></i></span>';
+else if(theme==="orbital")districtDecor='<span class="districtDecor orbital"><i class="pad"></i><i class="antenna"></i></span>';
+else if(theme==="eclipse")districtDecor='<span class="districtDecor eclipse"><i class="crystal"></i><i class="crystal c2"></i></span>';
+else if(theme==="crown")districtDecor='<span class="districtDecor crown"><i class="hedge"></i><i class="fountain"></i></span>';
+else if(theme==="transit")districtDecor='<span class="districtDecor transit"><i class="rail"></i></span>';
+else if(theme==="utility")districtDecor='<span class="districtDecor utility"><i class="pipe"></i></span>';
+else districtDecor='<span class="districtDecor special"><i class="starscape"></i></span>';
+let propScene="";
+if(prices[i]){
+ let kind=transit.includes(i)?"transitHub":utilities.includes(i)?"utilityPlant":
+   (g?(["shop","tower","dome","factory","villa","spire"][Math.abs(i+(g.ids?g.ids[0]:0))%6]):"tower");
+ let shortName=names[i].replace(/Station|Avenue|Boulevard|District|Way|Plaza|Exchange/gi,"").trim().slice(0,12);
+ propScene=`<span class="propertyScene"><i class="ground"></i><i class="propSprite ${kind}"></i><b class="propSign">${shortName||"SECTOR"}</b></span>`;
+}
+
+
+let streetLife="";
+if(prices[i]&&s.own[i]){
+ let busy=(lvl>=2?" busy":"");
+ if(transit.includes(i)) streetLife=`<span class="streetLife${busy}"><i class="streetTrain"></i><i class="streetPed"></i><i class="streetPed p2"></i></span>`;
+ else if(utilities.includes(i)) streetLife=`<span class="streetLife${busy}"><i class="deliveryBot"></i><i class="courierDrone"></i></span>`;
+ else streetLife=`<span class="streetLife${busy}"><i class="streetCar"></i>${lvl>=2?'<i class="streetCar c2"></i>':""}<i class="streetPed"></i>${lvl>=3?'<i class="streetPed p2"></i><i class="deliveryBot"></i>':""}${lvl>=4?'<i class="courierDrone"></i>':""}</span>`;
+}
+let megaLandmark="";
+if(lvl===4&&prices[i]){
+ let lmTheme=transit.includes(i)?"transit":utilities.includes(i)?"utility":theme;
+ megaLandmark=`<i class="landmarkBeacon"></i><span class="landmarkMega ${lmTheme}"></span><b class="landmarkLabel">${names[i].toUpperCase().slice(0,15)}</b>`;
+}
+
+let lighting="";
+if(prices[i]){
+ lighting=`<i class="cellLight"></i>${s.own[i]?'<i class="streetLamp l1"></i><i class="streetLamp l2"></i>':""}${lvl?'<i class="windowGlow"></i>':""}${s.own[i]?'<i class="neonEdge"></i>':""}${s.own[i]?'<i class="headLight"></i>':""}`;
+}
+let special="";
+if(i===0){e.classList.add("launchCell");special='<i class="specialIcon">🚀</i>'}
+else if(i===10){e.classList.add("holdingCell");special='<i class="specialIcon">🔒</i>'}
+else if(i===20){e.classList.add("freeCell");special='<i class="specialIcon">💰</i>'}
+else if(i===30){e.classList.add("gotoCell");special='<i class="specialIcon">🚨</i>'}
+else if([2,6,17,22,33,36].includes(i))special='<i class="portalRing"></i><i class="specialIcon">?</i>';
+
+e.innerHTML=`${band}<b>${names[i]}</b>${prices[i]?`<span class=price>$${prices[i]}</span>`:""}${districtDecor}${lighting}${zone}${special}${propScene}${streetLife}${builds}${megaLandmark}${flag}${vehicle}${mascot}${t}`;e.onclick=()=>showDeed(i);B.appendChild(e)}document.getElementById("cash").textContent="$"+s.c;document.getElementById("aicash").textContent="$"+s.ac;document.getElementById("aiType").textContent=aiP().icon+" "+aiP().name;document.getElementById("props").textContent=Object.values(s.own).filter(x=>x==="p").length;document.getElementById("round").textContent=s.round}
+let lastDice=[1,1];function dice(){let x=1+Math.floor(Math.random()*6),y=1+Math.floor(Math.random()*6);lastDice=[x,y];setTimeout(cinematicDice,10);["d1","d2"].forEach((id,j)=>{let e=document.getElementById(id);e.classList.remove("roll");void e.offsetWidth;e.classList.add("roll");e.textContent=["⚀","⚁","⚂","⚃","⚄","⚅"][[x,y][j]-1]});return x+y}
+function move(w,n){let old=s[w],nu=(old+n)%40;if(nu<old){if(w==="p")s.c+=200;else s.ac+=200} s[w]=nu}
+function land(w){let i=s[w],human=w==="p",money=human?"c":"ac",who=human?"You":"Rival";if(i===30){s[w]=10;if(human){s.holdP=1;s.holdTurnsP=0}else{s.holdA=1;s.holdTurnsA=0}msg.textContent=who+" was routed to Holding Bay.";if(human){bigReaction("SECURITY HOLD!",false);screenShake();warpFx();setTimeout(()=>jailEmotion("p"),160);tileReaction(10,false)}return}
+if([2,6,17,22,33,36].includes(i)){if(human)s.stats.events++;let deck=[22,36].includes(i)?fortuneCards:signalCards;triggerEvent(w,deck[Math.floor(Math.random()*deck.length)],[22,36].includes(i)?"fortune":"signal");return}
+if(i===20){s[money]+=100;msg.textContent=who+" docked at Free Dock and gained $100.";return}
+if(prices[i]&&s.own[i]&&s.own[i]!==w){let r=rentFor(i,s.own[i]);s[money]-=r;s[s.own[i]==="p"?"c":"ac"]+=r;if(human){s.stats.rentPaid+=r;cashFx("p",-r);cashFx("a",r);charAction("p","pay","💸");emotion("p","angry","💸");charAction("a","celebrate","🤑");emotion("a","rich","🤑");rentBeam("p","a");lightningBetween("p","a");creditTransfer("p","a",rent)}else{s.stats.rentEarned+=r;cashFx("a",-r);cashFx("p",r);charAction("a","pay","💸");emotion("a","angry","💸");charAction("p","celebrate","💰");emotion("p","rich","💰");rentBeam("a","p");lightningBetween("a","p");creditTransfer("a","p",rent)};msg.textContent=`${who} paid $${r} rent at ${names[i]}.`;if(human)setTimeout(checkPlayerDebt,50);else resolveAIDebt();return}
+if(human&&prices[i]&&!s.own[i]){s.pending=true;buy.disabled=s.c<prices[i];auction.disabled=false;msg.textContent=`${names[i]} is unclaimed. Purchase for $${prices[i]} or send it to auction?`;return}
+msg.textContent=`${who} landed on ${names[i]}.`}
+
+
+function triggerEvent(w,card,style){
+ let human=w==="p", money=human?"c":"ac", who=human?"You":"Rival";
+ function apply(){
+  if(card.kind==="cash"){s[money]+=card.v;cashFx(w,card.v);if(human){bigReaction(card.v>=0?"BONUS!":"OUCH!",card.v>=0);emotion("p",card.v>=0?"rich":"shock",card.v>=0?"💰":"😵");tileReaction(s[w],card.v>=0)}}
+  else if(card.kind==="move"){let old=s[w];s[w]=(s[w]+card.v+40)%40;if(card.v>0&&s[w]<old)s[money]+=200}
+  else if(card.kind==="launch"){s[w]=0;s[money]+=200;cashFx(w,200);boardPulse();if(human)warpFx()}
+  else if(card.kind==="hold"){s[w]=10;if(human){s.holdP=1;s.holdTurnsP=0}else{s.holdA=1;s.holdTurnsA=0}}
+  else if(card.kind==="pass"){if(human)s.releaseP++;else s.releaseA++}
+  else if(card.kind==="buildtax"){let levels=Object.keys(s.build).filter(k=>s.own[k]===w).reduce((a,k)=>a+(s.build[k]||0),0);s[money]-=levels*card.v}
+  draw();msg.textContent=who+" drew "+card.title+": "+card.effect+".";if(human)setTimeout(checkPlayerDebt,60);else resolveAIDebt();
+ }
+ if(!human){apply();return}
+ warpFx();directorBoard("camEvent",650);cinematicBarsFx();document.getElementById("eventIcon").textContent=card.icon;
+let ec=document.querySelector(".eventCard");
+if(ec){
+ ec.classList.remove("goodEvent","badEvent","moveEvent");
+ let evtClass=(card.kind==="cash"?(card.v>=0?"goodEvent":"badEvent"):(card.kind==="move"||card.kind==="launch")?"moveEvent":"goodEvent");
+ ec.classList.add(evtClass);
+ let oldScene=ec.querySelector(".eventScene");if(oldScene)oldScene.remove();
+ let oldBadge=ec.querySelector(".eventTypeBadge");if(oldBadge)oldBadge.remove();
+ let badge=document.createElement("div");badge.className="eventTypeBadge";badge.textContent=card.kind==="cash"?(card.v>=0?"REWARD EVENT":"HAZARD EVENT"):(card.kind==="move"||card.kind==="launch")?"NAVIGATION EVENT":"ORBITAL EVENT";
+ let icon=document.getElementById("eventIcon");icon.insertAdjacentElement("afterend",badge);
+ let scene=document.createElement("div");scene.className="eventScene";scene.innerHTML='<i class="planet"></i><i class="ship"></i><i class="pulse"></i>';badge.insertAdjacentElement("afterend",scene)
+}document.getElementById("eventTitle").textContent=card.title;
+ document.getElementById("eventEffect").textContent=card.effect;document.getElementById("eventDesc").textContent=card.desc;
+ document.getElementById("eventCard").className="eventCard "+style;document.getElementById("eventFlash").classList.add("show");
+ eventResolve=()=>{apply();document.getElementById("eventFlash").classList.remove("show");eventResolve=null};
+}
+document.getElementById("eventOk").onclick=()=>{if(eventResolve)eventResolve()};
+function showDeed(i){
+ const d=document.getElementById("deed"),g=groupOf(i),owner=s.own[i];
+ document.getElementById("deedName").textContent=names[i];
+ document.getElementById("deedDistrict").textContent=typeOf(i);
+ document.getElementById("deedPrice").textContent=prices[i]?"$"+prices[i]:"Not for sale";
+ document.getElementById("deedRent").textContent=prices[i]?"$"+rentFor(i,owner||"p"):"—";
+ let setRent="—";
+ if(g&&prices[i])setRent="$"+Math.max(24,Math.floor(prices[i]*.18)*2);
+ if(transit.includes(i))setRent="$200 max network";
+ if(utilities.includes(i))setRent="$80 linked";
+ document.getElementById("deedSet").textContent=setRent;
+ document.getElementById("deedOwner").textContent=(owner==="p"?"YOU":owner==="a"?"RIVAL":"UNCLAIMED")+(s.mort[i]?" • MORTGAGED":"");
+ document.getElementById("miniOwner").textContent=owner==="p"?s.playerName.toUpperCase()+" DISTRICT":owner==="a"?aiP().name+" DISTRICT":"UNCLAIMED SECTOR";
+ document.getElementById("deedHead").style.background=g?g.color:(transit.includes(i)?"#d9e5eb":utilities.includes(i)?"#66f2c2":"#62e7ff");
+ document.getElementById("deedText").textContent=prices[i]?(g?"Own every property in this district to unlock construction and double base rent.":transit.includes(i)?"Each transit station you control increases network rent.":"Linked utilities increase their rent value."):"This is a special board sector with its own event or movement rule.";
+ let lvl=s.build[i]||0, cost=buildCost(i), can=!s.mort[i]&&g&&owner==="p"&&g.ids.every(x=>s.own[x]==="p")&&lvl<4&&s.c>=cost;
+ let ub=document.getElementById("upgrade");ub.dataset.i=i;ub.disabled=!can;
+ ub.textContent=lvl>=4?"LANDMARK COMPLETE":lvl===3?"BUILD LANDMARK — $"+cost:"BUILD LEVEL "+(lvl+1)+" — $"+cost;
+ document.getElementById("buildInfo").textContent=g?(lvl===0?"Development: empty lot":lvl<4?"Development level: "+lvl+" / 4":"Development: LANDMARK 🏙️"):"This sector cannot be developed.";
+ d.classList.add("show");
+}
+function buildCost(i){return Math.max(50,Math.floor((prices[i]||100)*.65)+((s.build[i]||0)*35))}
+document.getElementById("upgrade").onclick=function(){
+ let i=+this.dataset.i,g=groupOf(i),lvl=s.build[i]||0,cost=buildCost(i);
+ if(!g||s.own[i]!=="p"||!g.ids.every(x=>s.own[x]==="p")||lvl>=4||s.c<cost)return;
+ s.c-=cost;s.stats.builds++;s.build[i]=lvl+1;lastBuildFx=i;cashFx("p",-cost);draw();boardPulse();burst("BUILD +1",innerWidth/2,innerHeight*.48,true);bigReaction(s.build[i]===4?"LANDMARK!":"BUILD!",true);if(s.build[i]===4)finalShine();cinematicTilt();momentumFx(s.build[i]===4?"LANDMARK":"DEVELOPMENT");if(s.build[i]===4)confettiBurst();tileReaction(i,true);cameraPunch();setTimeout(()=>{directorBoard("camBuild",900);directorFocus(i,"CONSTRUCTION");tileWorldBurst(i,"gold");cartoonTileBounce(i,"BUILD!");cinematicBarsFx();charAction("p","celebrate","🔨");emotion("p","happy","🔨");cameraPunch();constructionFx(i)},100);showDeed(i);
+ msg.textContent=(s.build[i]===4?"Landmark completed at ":"Structure upgraded at ")+names[i]+".";
+};
+document.getElementById("closeDeed").onclick=()=>document.getElementById("deed").classList.remove("show");
+document.getElementById("deed").onclick=e=>{if(e.target.id==="deed")e.currentTarget.classList.remove("show")};
+
+const bail=document.getElementById("bail"),passBtn=document.getElementById("pass");
+function holdUI(){
+ bail.style.display=s.holdP?"inline-block":"none";passBtn.style.display=s.holdP&&s.releaseP?"inline-block":"none";
+ bail.disabled=!s.holdP||s.c<50;passBtn.disabled=!s.holdP||!s.releaseP;
+}
+function releasePlayer(text){s.holdP=0;s.holdTurnsP=0;bail.style.display="none";passBtn.style.display="none";msg.textContent=text}
+bail.onclick=()=>{if(s.holdP&&s.c>=50){s.c-=50;releasePlayer("You paid $50 and left Holding Bay. Roll to continue.");draw();roll.disabled=false}};
+passBtn.onclick=()=>{if(s.holdP&&s.releaseP){s.releaseP--;releasePlayer("Security Override accepted. You left Holding Bay.");draw();roll.disabled=false}};
+function aiHeldTurn(done){
+ if(!s.holdA){done(false);return}
+ if(s.releaseA){s.releaseA--;s.holdA=0;s.holdTurnsA=0;msg.textContent="Rival used a Security Override.";done(false);return}
+ if(s.ac>=50&&s.holdTurnsA>=1){s.ac-=50;s.holdA=0;s.holdTurnsA=0;msg.textContent="Rival paid $50 to leave Holding Bay.";done(false);return}
+ let n=dice();if(lastDice[0]===lastDice[1]){s.holdA=0;s.holdTurnsA=0;msg.textContent="Rival rolled doubles and escaped Holding Bay!";animateMove("a",n,()=>done(true));return}
+ else{s.holdTurnsA++;if(s.holdTurnsA>=3){s.ac-=50;s.holdA=0;s.holdTurnsA=0;msg.textContent="Rival's third failed attempt cost $50. Released."}else msg.textContent="Rival failed to roll doubles in Holding Bay.";done(false)}
+}
+roll.onclick=()=>{turnBanner(s.playerName.toUpperCase()+" • ROLL");s.stats.rolls++;roll.disabled=true;buy.disabled=true;auction.disabled=true;end.disabled=true;s.pending=false;let n=dice();
+ if(s.holdP){
+   if(lastDice[0]===lastDice[1]){s.holdP=0;s.holdTurnsP=0;msg.textContent="DOUBLES! You escaped Holding Bay.";bigReaction("ESCAPED!",true);emotion("p","happy","😎");animateMove("p",n,()=>{land("p");end.disabled=false;holdUI();draw()})}
+   else{s.holdTurnsP++;if(s.holdTurnsP>=3){s.c-=50;s.holdP=0;s.holdTurnsP=0;msg.textContent="Third failed escape. $50 release fee paid.";end.disabled=false}else{msg.textContent="No doubles. You remain in Holding Bay ("+s.holdTurnsP+"/3).";end.disabled=false}holdUI();draw()}return;
+ }
+ if(lastDice[0]===lastDice[1])s.doublesP++;else s.doublesP=0;
+ if(s.doublesP>=3){s.p=10;s.holdP=1;s.holdTurnsP=0;s.doublesP=0;msg.textContent="Three consecutive doubles! Security routed you to Holding Bay.";bigReaction("THREE DOUBLES!",false);screenShake();setTimeout(()=>jailEmotion("p"),160);tileReaction(10,false);end.disabled=false;holdUI();draw();return}
+ animateMove("p",n,()=>{land("p");end.disabled=false;holdUI();draw()})}
+
+function openMarket(title,html){document.getElementById("marketTitle").textContent=title;marketBody.innerHTML=html;market.classList.add("show")}
+document.getElementById("marketClose").onclick=()=>market.classList.remove("show");
+market.onclick=e=>{if(e.target===market)market.classList.remove("show")};
+
+
+function mortgageValue(i){return Math.max(30,Math.floor(prices[i]*.5))}
+function unmortgageCost(i){return Math.ceil(mortgageValue(i)*1.1)}
+finance.onclick=()=>renderFinance();
+function renderFinance(){
+ let mine=Object.keys(s.own).filter(k=>s.own[k]==="p");
+ let body=`<div class="sub">Liquidate structures, mortgage property, or restore mortgaged sectors. Mortgaged property collects no rent.</div><div style="margin:9px 0"><b>Available credits: $${s.c}</b></div>`;
+ if(!mine.length)body+=`<p>You own no financeable property.</p>`;
+ for(let k of mine){let i=+k,l=s.build[i]||0,m=s.mort[i];
+  body+=`<div class="tradeRow"><span><b>${names[i]}</b><br><small>${m?"MORTGAGED":l?"Structures: "+l:"Active deed"}</small></span><span>`;
+  if(l&&!m)body+=`<button data-sell="${i}">SELL LEVEL +$${Math.floor(buildCostAtLevel(i,l)*.5)}</button>`;
+  else if(m)body+=`<button data-unmort="${i}">RESTORE -$${unmortgageCost(i)}</button>`;
+  else body+=`<button data-mort="${i}">MORTGAGE +$${mortgageValue(i)}</button>`;
+  body+=`</span></div>`;
+ }
+ openMarket("EMPIRE FINANCE",body);bindFinance();
+}
+function buildCostAtLevel(i,l){return Math.max(50,Math.floor((prices[i]||100)*.65)+((Math.max(0,l-1))*35))}
+function bindFinance(){
+ marketBody.querySelectorAll("[data-sell]").forEach(b=>b.onclick=()=>{let i=+b.dataset.sell,l=s.build[i]||0;if(l){let v=Math.floor(buildCostAtLevel(i,l)*.5);s.build[i]=l-1;s.c+=v;msg.textContent=`Sold one development level at ${names[i]} for $${v}.`;draw();renderFinance();checkPlayerDebt()}});
+ marketBody.querySelectorAll("[data-mort]").forEach(b=>b.onclick=()=>{let i=+b.dataset.mort;if(!s.build[i]&&!s.mort[i]){let v=mortgageValue(i);s.mort[i]=1;s.c+=v;msg.textContent=`${names[i]} mortgaged for $${v}.`;draw();renderFinance();checkPlayerDebt()}});
+ marketBody.querySelectorAll("[data-unmort]").forEach(b=>b.onclick=()=>{let i=+b.dataset.unmort,c=unmortgageCost(i);if(s.c>=c){s.c-=c;delete s.mort[i];msg.textContent=`${names[i]} restored for $${c}.`;draw();renderFinance()}});
+}
+function playerLiquidAssets(){
+ let total=s.c;Object.keys(s.own).filter(k=>s.own[k]==="p").forEach(k=>{let i=+k;if(!s.mort[i])total+=mortgageValue(i);let l=s.build[i]||0;for(let x=l;x>0;x--)total+=Math.floor(buildCostAtLevel(i,x)*.5)});return total
+}
+function checkPlayerDebt(){
+ if(s.over)return;
+ if(s.c>=0){if(!s.pending){roll.disabled=false}return;}
+ if(playerLiquidAssets()+Math.abs(Math.min(0,s.c))>0 && Object.keys(s.own).some(k=>s.own[k]==="p"&&(!s.mort[k]||(s.build[k]||0)>0))){
+   msg.textContent=`DEBT ALERT: $${Math.abs(s.c)} owed. Use FINANCE to sell structures or mortgage property.`;
+   finance.disabled=false;roll.disabled=true;end.disabled=true;return;
+ }
+ bankrupt("p");
+}
+function resolveAIDebt(){
+ if(s.ac>=0||s.over)return;
+ let owned=Object.keys(s.own).filter(k=>s.own[k]==="a").sort((x,y)=>aiPurchaseValue(+x)-aiPurchaseValue(+y));
+ for(let k of owned){let i=+k;while(s.ac<0&&(s.build[i]||0)>0){let l=s.build[i];s.ac+=Math.floor(buildCostAtLevel(i,l)*.5);s.build[i]--}}
+ for(let k of owned){let i=+k;if(s.ac>=0)break;if(!s.mort[i]&&!s.build[i]){s.mort[i]=1;s.ac+=mortgageValue(i)}}
+ if(s.ac<0)bankrupt("a");draw();
+}
+function bankrupt(w){
+ s.over=true;market.classList.remove("show");roll.disabled=buy.disabled=auction.disabled=end.disabled=trade.disabled=finance.disabled=true;
+ if(w==="p"){msg.textContent="EMPIRE COLLAPSE — You are bankrupt. The rival controls the orbital market.";screenShake();bankruptcyMoneyFx("p");emotion("p","broke","💸");emotion("a","victory","👑")}
+ else{msg.textContent="VICTORY — Rival empire is bankrupt. You control the orbital market!";directorBoard("camImpact",500);cinematicBarsFx();megaStarBurst("p");charAction("p","celebrate","👑");emotion("p","victory","👑");emotion("a","broke","😵");finalShine();crownRain();confettiBurst();setTimeout(()=>confettiBurst(innerWidth*.3,innerHeight*.3),250);setTimeout(()=>confettiBurst(innerWidth*.7,innerHeight*.3),500);for(let z=0;z<5;z++)setTimeout(()=>burst("✦ VICTORY ✦",Math.random()*innerWidth,innerHeight*(.25+Math.random()*.5),true),z*180)}
+ let title=w==="p"?"EMPIRE COLLAPSE":"ORBITAL VICTORY",icon=w==="p"?"💀":"👑";
+ openMarket(title,`<div style="text-align:center;padding:25px"><div style="font-size:70px">${icon}</div><h2>${title}</h2><p>${w==="p"?"Your remaining assets could not cover the debt.":"The rival could no longer cover its debts."}</p><button class="close" onclick="location.reload()">NEW GAME</button></div>`);
+}
+auction.onclick=()=>{
+ let i=s.p;if(!prices[i]||s.own[i])return;
+ buy.disabled=true;auction.disabled=true;s.pending=false;
+ let bid=Math.max(10,Math.floor(prices[i]*.45)),playerIn=true,aiIn=s.ac>=bid;
+ function renderAuction(){
+  openMarket("LIVE AUCTION — "+names[i],`<div class="sub" style="text-align:center">Unclaimed sector enters the orbital exchange.</div><div class="bid">$${bid}</div><div class="sub" style="text-align:center;margin-bottom:12px">Current asking bid</div><div class="marketBtns"><button id="raiseBid">RAISE +$10</button><button id="dropBid">DROP OUT</button></div>`);
+  document.getElementById("raiseBid").onclick=()=>{
+   let next=bid+10;if(s.c<next){msg.textContent="You cannot cover that bid.";return}bid=next;
+   let aiValue=Math.floor(aiPurchaseValue(i)*aiP().auction*(.82+Math.random()*.28));
+   if(s.ac>=bid+10&&bid+10<=aiValue){bid+=10;msg.textContent=`Rival counters at $${bid}.`;renderAuction()}
+   else{finishAuction("p")}
+  };
+  document.getElementById("dropBid").onclick=()=>{if(aiIn&&s.ac>=bid)finishAuction("a");else{market.classList.remove("show");msg.textContent="Auction closed with no buyer.";end.disabled=false}};
+ }
+ function finishAuction(w){s.stats.auctions++;market.classList.remove("show");s.own[i]=w;if(w==="p"){s.c-=bid;cashFx("p",-bid);burst("AUCTION WON",innerWidth/2,innerHeight*.42,true);directorBoard("camBuy",720);cinematicBarsFx();bigReaction("AUCTION WON!",true);emotion("p","rich","🏆");finalShine();cinematicTilt();momentumFx("AUCTION");confettiBurst();tileReaction(i,true);msg.textContent=`You won ${names[i]} at auction for $${bid}.`}else{s.ac-=bid;msg.textContent=`Rival won ${names[i]} at auction for $${bid}.`}draw();districtCelebration(i,w);end.disabled=false}
+ // AI makes opening bid if it can, otherwise player can claim opening bid
+ if(!aiIn){bid=Math.min(bid,s.c);renderAuction()}else{renderAuction()}
+};
+
+trade.onclick=()=>{
+ let mine=Object.keys(s.own).filter(k=>s.own[k]==="p"), theirs=Object.keys(s.own).filter(k=>s.own[k]==="a");
+ let html=`<div class="sub">Propose a simple one-property-for-one-property exchange. The rival evaluates district completion and property value.</div>`;
+ if(!mine.length||!theirs.length){openMarket("TRADE NETWORK",html+`<p>No exchange is possible yet. Both empires must own at least one property.</p>`);return}
+ html+=`<div id="tradePick"><b>YOUR PROPERTY TO OFFER</b>${mine.map(i=>`<div class="tradeRow"><span>${names[i]}<br><small>Value $${prices[i]}</small></span><button data-mine="${i}">OFFER</button></div>`).join("")}</div>`;
+ openMarket("TRADE NETWORK",html);
+ marketBody.querySelectorAll("[data-mine]").forEach(btn=>btn.onclick=()=>pickTheir(+btn.dataset.mine));
+};
+function pickTheir(mi){
+ let theirs=Object.keys(s.own).filter(k=>s.own[k]==="a");
+ marketBody.innerHTML=`<div class="sub">Offering <b>${names[mi]}</b>. Choose what you want from the rival.</div>`+theirs.map(i=>`<div class="tradeRow"><span>${names[i]}<br><small>Value $${prices[i]}</small></span><button data-their="${i}">REQUEST</button></div>`).join("");
+ marketBody.querySelectorAll("[data-their]").forEach(btn=>btn.onclick=()=>evaluateTrade(mi,+btn.dataset.their));
+}
+function strategicValue(i,w){
+ let v=prices[i],g=groupOf(i);if(g){let held=g.ids.filter(x=>s.own[x]===w).length;v+=held*45;if(held===g.ids.length-1)v+=120}v+=(s.build[i]||0)*80;return v
+}
+function evaluateTrade(mi,ai){
+ let offered=strategicValue(mi,"a"),asked=strategicValue(ai,"a"),p=aiP();
+ let gainGroup=groupOf(mi),loseGroup=groupOf(ai);
+ if(gainGroup&&gainGroup.ids.filter(x=>s.own[x]==="a").length===gainGroup.ids.length-1)offered+=140;
+ if(loseGroup&&loseGroup.ids.filter(x=>s.own[x]==="a").length>=loseGroup.ids.length-1)asked+=120;
+ let accepted=offered>=asked*p.trade||Math.random()<.06;
+ if(accepted){s.stats.trades++;s.own[mi]="a";s.own[ai]="p";market.classList.remove("show");msg.textContent=`TRADE ACCEPTED: ${names[mi]} exchanged for ${names[ai]}.`;directorBoard("camBuy",720);cinematicBarsFx();bigReaction("TRADE!",true);emotion("p","happy","🤝");emotion("a","shock","🤔");cinematicTilt();momentumFx("TRADE");draw();districtCelebration(ai,"p");districtCelebration(mi,"a")}
+ else{marketBody.innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:45px">🤖</div><h3>TRADE DECLINED</h3><div class="sub">The rival values ${names[ai]} above your current offer.</div></div>`}
+}
+buy.onclick=()=>{let i=s.p;if(prices[i]&&!s.own[i]&&s.c>=prices[i]){s.c-=prices[i];s.stats.buys++;cashFx("p",-prices[i]);s.own[i]="p";s.pending=false;boardPulse();burst("ACQUIRED",innerWidth/2,innerHeight*.45,true);bigReaction("PROPERTY!",true);cinematicTilt();momentumFx("ACQUISITION");confettiBurst();tileReaction(i,true);cameraPunch();directorBoard("camBuy",720);directorFocus(i,"PROPERTY ACQUIRED");tileWorldBurst(i,"gold");cartoonTileBounce(i,"OWNED!");spendMoneyFx("p",prices[i]);setTimeout(()=>{charAction("p","celebrate","🏠");emotion("p","happy","🏠")},100);buy.disabled=true;auction.disabled=true;msg.textContent=`Purchased ${names[i]} for $${prices[i]}.`;draw();districtCelebration(i,"p");autosave()}}
+end.onclick=()=>{roll.disabled=true;buy.disabled=true;auction.disabled=true;end.disabled=true;bail.style.display="none";passBtn.style.display="none";msg.textContent="Rival AI is rolling…";turnBanner(aiP().name+" • TURN");
+ setTimeout(()=>{aiHeldTurn((moved)=>{
+   function finishAI(){
+    let i=s.a;if(aiShouldBuy(i)){s.ac-=prices[i];s.own[i]="a";msg.textContent=`${aiP().icon} ${aiP().name} purchased ${names[i]} for $${prices[i]}.`;setTimeout(()=>districtCelebration(i,"a"),100)}
+ else if(prices[i]&&!s.own[i]){msg.textContent=`${aiP().icon} ${aiP().name} passed on ${names[i]} to preserve strategy cash.`}
+    aiRestorePhase();aiBuildPhase();
+    s.round++;draw();roundFx();autosave();setTimeout(()=>{msg.textContent+=" Your turn.";roll.disabled=false;holdUI()},600)
+   }
+   if(s.holdA||(!moved&&s.a===10)){finishAI();return}
+   if(moved){setTimeout(()=>{land("a");finishAI()},450);return}
+   let n=dice();if(lastDice[0]===lastDice[1])s.doublesA++;else s.doublesA=0;
+   if(s.doublesA>=3){s.a=10;s.holdA=1;s.holdTurnsA=0;s.doublesA=0;msg.textContent="Rival rolled three doubles and was routed to Holding Bay.";finishAI();return}
+   animateMove("a",n,()=>{land("a");finishAI()})
+ })},650)}
+
+document.getElementById("saveBtn").onclick=()=>safeSave(true);
+document.getElementById("resetBtn").onclick=()=>{if(confirm("Start a completely new empire?")){try{localStorage.removeItem(SAVEKEY)}catch(e){}location.reload()}};
+document.getElementById("statsBtn").onclick=()=>{let st=s.stats,pc=Object.values(s.own).filter(x=>x==="p").length,ac=Object.values(s.own).filter(x=>x==="a").length;
+ openMarket("EMPIRE STATISTICS",`<div class="deedGrid"><div>Commander<b>${s.playerName}</b></div><div>Round<b>${s.round}</b></div><div>Dice Rolls<b>${st.rolls}</b></div><div>Properties<b>${pc}</b></div><div>Rival Properties<b>${ac}</b></div><div>Builds<b>${st.builds}</b></div><div>Rent Paid<b>$${st.rentPaid}</b></div><div>Rent Earned<b>$${st.rentEarned}</b></div><div>Events<b>${st.events}</b></div><div>Trades<b>${st.trades}</b></div></div>`)};
+document.getElementById("newGameBtn").onclick=()=>{s.playerName=(document.getElementById("playerName").value||"Commander").trim();s.difficulty=document.getElementById("difficulty").value;s.aiProfile=aiProfiles[Math.floor(Math.random()*aiProfiles.length)];document.getElementById("startScreen").classList.add("hide");draw();holdUI();msg.textContent=`${s.playerName}, rival detected: ${aiP().icon} ${aiP().name} — ${aiP().desc}. Roll to begin.`;safeSave(false);updateWorldCycle();setTimeout(()=>{turnBanner("WELCOME, "+s.playerName.toUpperCase());finalShine()},120)};
+let hasSave=false;try{hasSave=!!localStorage.getItem(SAVEKEY)}catch(e){}
+document.getElementById("resumeBtn").style.display=hasSave?"block":"none";
+document.getElementById("resumeBtn").onclick=()=>{if(loadSave()){document.getElementById("startScreen").classList.add("hide");draw();holdUI();msg.textContent=`Welcome back, ${s.playerName}. ${aiP().icon} ${aiP().name} is waiting. Your turn.`;roll.disabled=false}else toast("NO VALID SAVE")};
+window.addEventListener("beforeunload",()=>autosave());
+draw();holdUI();msg.textContent="Choose NEW EMPIRE or resume your saved campaign.";
+
+setTimeout(()=>{try{updateWorldCycle()}catch(e){}},250);
+</script></body></html>
